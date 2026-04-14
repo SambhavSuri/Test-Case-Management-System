@@ -25,8 +25,8 @@ export default function SideNavBar() {
           <span className="font-['Inter'] font-medium text-sm">Projects</span>
         </Link>
         <Link to="/test-cases" className={`rounded-lg flex items-center gap-3 px-4 py-3 transition-all duration-200 ${path === '/test-cases' ? 'bg-white text-primary shadow-sm border border-outline-variant/30 font-bold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 hover:translate-x-1'}`}>
-          <span className="material-symbols-outlined" data-icon="rule">rule</span>
-          <span className="font-['Inter'] font-medium text-sm">Test Cases</span>
+          <span className="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+          <span className="font-['Inter'] font-medium text-sm">Test Runs</span>
         </Link>
         <Link to="/test-plans" className={`rounded-lg flex items-center gap-3 px-4 py-3 transition-all duration-200 ${path === '/test-plans' ? 'bg-white text-primary shadow-sm border border-outline-variant/30 font-bold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 hover:translate-x-1'}`}>
           <span className="material-symbols-outlined" data-icon="assignment">assignment</span>

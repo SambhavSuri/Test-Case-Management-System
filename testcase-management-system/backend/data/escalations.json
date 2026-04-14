@@ -1,0 +1,46 @@
+[
+  {
+    "runId": "id_1776163382718_kb2kvd9",
+    "runName": "Test 1 ",
+    "assignedTo": "Aman Dhingra",
+    "severity": "High",
+    "description": "Pls solve it",
+    "status": "Open",
+    "createdAt": "2026-04-14T11:19:10.159Z",
+    "items": [
+      {
+        "testCaseId": "id_1776162240691_lz1c6mb",
+        "title": "test_tc142_zoom_controls",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": "Can be better"
+      },
+      {
+        "testCaseId": "id_1776162240814_yzqnqn3",
+        "title": "test_tc158_default_time_range",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": "Wrong"
+      },
+      {
+        "testCaseId": "id_1776162240953_lu8pqp8",
+        "title": "test_tc174_leaderboard_headers",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": "must be raised"
+      },
+      {
+        "testCaseId": "id_1776162240979_z5eeno0",
+        "title": "test_tc177_view_more",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": "look into it"
+      }
+    ],
+    "id": "id_1776165550170_yqouqsr"
+  }
+]

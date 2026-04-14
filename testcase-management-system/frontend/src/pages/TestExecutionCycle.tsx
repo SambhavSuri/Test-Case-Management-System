@@ -6,51 +6,112 @@ interface TestPlan {
   description: string;
   status: string;
   owner: string;
-  startDate: string;
-  endDate: string;
-  createdAt: string;
+}
+
+interface TestStep {
+  step: string;
+  expected: string;
 }
 
 interface TestCase {
   id: string;
   title: string;
+  description?: string;
+  preconditions?: string;
+  steps?: TestStep[];
   priority: string;
   type: string;
   status: string;
+  automationStatus?: string;
+  owner?: string;
+  tags?: string[];
   lastRun: string;
   suite?: string;
   projectId?: string;
   planId?: string;
 }
 
-interface ExecutionLog {
+interface ProjectData {
   id: string;
+  name: string;
+  modules: { name: string; suites: string[] }[];
+}
+
+interface RunResult {
   testCaseId: string;
-  testCaseTitle: string;
-  action: string;
-  timestamp: Date;
+  status: string; // Passed | Failed | Blocked | Retest | Skipped | Untested
+  comment?: string;
+}
+
+interface TestRun {
+  id: string;
+  name: string;
+  status: string; // In Progress | Completed
+  assignedTo: string;
+  projectId: string;
+  planId?: string;
+  createdAt: string;
+  results: RunResult[];
 }
 
 export default function TestExecutionCycle() {
-  const [plans, setPlans] = useState<TestPlan[]>([]);
+  const [runs, setRuns] = useState<TestRun[]>([]);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [projects, setProjects] = useState<ProjectData[]>([]);
+  const [plans, setPlans] = useState<TestPlan[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [executionLog, setExecutionLog] = useState<ExecutionLog[]>([]);
-  const [activeTestId, setActiveTestId] = useState<string | null>(null);
+  // Views
+  const [selectedRun, setSelectedRun] = useState<TestRun | null>(null);
+  const [listTab, setListTab] = useState<"active" | "closed">("active");
+
+  // Detail view state
+  const [selectedSuite, setSelectedSuite] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [originalFilter, setOriginalFilter] = useState("All");
+
+  // Create run modal
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newRun, setNewRun] = useState({ name: "", assignedTo: "", projectId: "", planId: "" });
+  const [includeExistingResults, setIncludeExistingResults] = useState(false);
+
+  // Comment editing state
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [commentDraft, setCommentDraft] = useState("");
+
+  // Test case detail slideout
+  const [viewingTC, setViewingTC] = useState<TestCase | null>(null);
+
+  // Selection for escalation
+  const [selectedTcIds, setSelectedTcIds] = useState<Set<string>>(new Set());
+
+  // Escalation modal
+  const [isEscalateOpen, setIsEscalateOpen] = useState(false);
+  const [escalation, setEscalation] = useState({ assignedTo: "", severity: "High", description: "" });
+
+  // Escalations data
+  const [escalations, setEscalations] = useState<any[]>([]);
+
+  // Detail view tab
+  const [detailTab, setDetailTab] = useState<"cases" | "escalated">("cases");
 
   const fetchData = async () => {
     try {
-      const [plansRes, tcRes] = await Promise.all([
+      const [runsRes, tcRes, projRes, plansRes, escRes] = await Promise.all([
+        fetch("http://localhost:3001/api/testruns"),
+        fetch("http://localhost:3001/api/testcases"),
+        fetch("http://localhost:3001/api/projects"),
         fetch("http://localhost:3001/api/testplans"),
-        fetch("http://localhost:3001/api/testcases")
+        fetch("http://localhost:3001/api/escalations")
       ]);
-      if (plansRes.ok) setPlans(await plansRes.json());
+      if (runsRes.ok) setRuns(await runsRes.json());
       if (tcRes.ok) setTestCases(await tcRes.json());
+      if (projRes.ok) setProjects(await projRes.json());
+      if (plansRes.ok) setPlans(await plansRes.json());
+      if (escRes.ok) setEscalations(await escRes.json());
     } catch (error) {
-      console.error("Failed to fetch data:", error);
+      console.error("Failed to fetch:", error);
     } finally {
       setLoading(false);
     }
@@ -58,432 +119,1098 @@ export default function TestExecutionCycle() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // Auto-select first plan with cases
-  useEffect(() => {
-    if (!selectedPlanId && plans.length > 0) {
-      const firstWithCases = plans.find(p => testCases.some(tc => tc.planId === p.id));
-      if (firstWithCases) setSelectedPlanId(firstWithCases.id);
-      else setSelectedPlanId(plans[0].id);
-    }
-  }, [plans, testCases]);
+  // ── Helpers ───────────────────────────────────────────────
+  const getRunStats = (run: TestRun) => {
+    const total = run.results.length;
+    const passed = run.results.filter(r => r.status === "Passed").length;
+    const failed = run.results.filter(r => r.status === "Failed").length;
+    const blocked = run.results.filter(r => r.status === "Blocked").length;
+    const retest = run.results.filter(r => r.status === "Retest").length;
+    const skipped = run.results.filter(r => r.status === "Skipped").length;
+    const untested = run.results.filter(r => r.status === "Untested").length;
+    const completed = passed + failed + blocked + retest + skipped;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, passed, failed, blocked, retest, skipped, untested, percent };
+  };
 
-  const selectedPlan = plans.find(p => p.id === selectedPlanId) || null;
-  const planTestCases = selectedPlanId ? testCases.filter(tc => tc.planId === selectedPlanId) : [];
+  const getTcById = (id: string) => testCases.find(tc => tc.id === id);
 
-  const filteredCases = planTestCases.filter(tc => {
-    if (statusFilter === "All") return true;
-    return tc.status === statusFilter;
-  });
+  const getProjectForRun = (run: TestRun) => projects.find(p => p.id === run.projectId);
 
-  // KPIs
-  const totalCases = planTestCases.length;
-  const passedCount = planTestCases.filter(tc => tc.status === "PASSED").length;
-  const failedCount = planTestCases.filter(tc => tc.status === "FAILED").length;
-  const blockedCount = planTestCases.filter(tc => tc.status === "BLOCKED").length;
-  const completionPercent = totalCases > 0 ? Math.round(((passedCount + failedCount) / totalCases) * 100) : 0;
+  // Get modules/suites for a run's project, with counts from run results
+  const getModuleTree = (run: TestRun) => {
+    const proj = getProjectForRun(run);
+    if (!proj) return [];
+    return proj.modules.map(mod => {
+      const suiteData = mod.suites.map(suite => {
+        const casesInSuite = run.results.filter(r => {
+          const tc = getTcById(r.testCaseId);
+          return tc && tc.suite === suite;
+        });
+        return { name: suite, total: casesInSuite.length, results: casesInSuite };
+      });
+      const totalInModule = suiteData.reduce((sum, s) => sum + s.total, 0);
+      return { name: mod.name, suites: suiteData, total: totalInModule };
+    });
+  };
 
-  const updateTestCaseStatus = async (tcId: string, newStatus: string) => {
-    const tc = testCases.find(t => t.id === tcId);
-    if (!tc) return;
+  // Map test case status to run result status
+  const mapTcStatusToRunStatus = (tcStatus: string): string => {
+    const s = tcStatus.toUpperCase();
+    if (s === "PASSED") return "Passed";
+    if (s === "FAILED") return "Failed";
+    if (s === "BLOCKED") return "Blocked";
+    if (s === "SKIPPED") return "Skipped";
+    return "Untested";
+  };
+
+  // Create run
+  const submitCreateRun = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRun.name.trim() || !newRun.projectId) return;
+
+    const projectCases = testCases.filter(tc => tc.projectId === newRun.projectId);
+    const results: RunResult[] = projectCases.map(tc => ({
+      testCaseId: tc.id,
+      status: includeExistingResults ? mapTcStatusToRunStatus(tc.status) : "Untested"
+    }));
 
     try {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-      await fetch(`http://localhost:3001/api/testcases/${tcId}`, {
+      await fetch("http://localhost:3001/api/testruns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newRun,
+          status: "In Progress",
+          createdAt: new Date().toISOString().split("T")[0],
+          results
+        })
+      });
+      setIsCreateOpen(false);
+      setNewRun({ name: "", assignedTo: "", projectId: "", planId: "" });
+      setIncludeExistingResults(false);
+      fetchData();
+    } catch (error) { console.error("Error creating run:", error); }
+  };
+
+  // Update a single test case result in a run
+  const updateResultStatus = async (run: TestRun, testCaseId: string, newStatus: string) => {
+    const updatedResults = run.results.map(r =>
+      r.testCaseId === testCaseId ? { ...r, status: newStatus } : r
+    );
+    const allDone = updatedResults.every(r => r.status !== "Untested");
+    try {
+      const updated = { ...run, results: updatedResults, status: allDone ? "Completed" : run.status };
+      await fetch(`http://localhost:3001/api/testruns/${run.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...tc, status: newStatus, lastRun: now.toISOString().split("T")[0] + " " + timeStr })
+        body: JSON.stringify(updated)
       });
-
-      // Add to execution log
-      setExecutionLog(prev => [{
-        id: `log_${Date.now()}`,
-        testCaseId: tc.id.substring(0, 10),
-        testCaseTitle: tc.title,
-        action: newStatus,
-        timestamp: now
-      }, ...prev]);
-
-      if (activeTestId === tcId) setActiveTestId(null);
+      setSelectedRun(updated);
       fetchData();
-    } catch (error) {
-      console.error("Error updating test case:", error);
+    } catch (error) { console.error("Error updating result:", error); }
+  };
+
+  // Save comment for a test case in a run
+  const saveComment = async (run: TestRun, testCaseId: string, comment: string) => {
+    const updatedResults = run.results.map(r =>
+      r.testCaseId === testCaseId ? { ...r, comment: comment.trim() || undefined } : r
+    );
+    try {
+      const updated = { ...run, results: updatedResults };
+      await fetch(`http://localhost:3001/api/testruns/${run.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated)
+      });
+      setSelectedRun(updated);
+      setEditingCommentId(null);
+      setCommentDraft("");
+      fetchData();
+    } catch (error) { console.error("Error saving comment:", error); }
+  };
+
+  // Close run
+  const closeRun = async (run: TestRun) => {
+    try {
+      await fetch(`http://localhost:3001/api/testruns/${run.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...run, status: "Completed" })
+      });
+      setSelectedRun({ ...run, status: "Completed" });
+      fetchData();
+    } catch (error) { console.error("Error closing run:", error); }
+  };
+
+  // Selection helpers
+  const toggleTcSelection = (id: string) => {
+    const next = new Set(selectedTcIds);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelectedTcIds(next);
+  };
+
+  const openEscalateModal = () => {
+    if (!selectedRun) return;
+    // If nothing selected, auto-select all Failed/Blocked in current filtered view
+    if (selectedTcIds.size === 0) {
+      const failedIds = selectedRun.results
+        .filter(r => r.status === "Failed" || r.status === "Blocked")
+        .map(r => r.testCaseId);
+      setSelectedTcIds(new Set(failedIds));
     }
+    setEscalation({ assignedTo: "", severity: "High", description: "" });
+    setIsEscalateOpen(true);
   };
 
-  const startTest = (tcId: string) => {
-    setActiveTestId(tcId);
-    const tc = testCases.find(t => t.id === tcId);
-    if (tc) {
-      setExecutionLog(prev => [{
-        id: `log_${Date.now()}`,
-        testCaseId: tc.id.substring(0, 10),
-        testCaseTitle: tc.title,
-        action: "STARTED",
-        timestamp: new Date()
-      }, ...prev]);
-    }
+  const submitEscalation = async () => {
+    if (!selectedRun || selectedTcIds.size === 0 || !escalation.assignedTo.trim()) return;
+
+    const items = Array.from(selectedTcIds).map(tcId => {
+      const tc = getTcById(tcId);
+      const result = selectedRun.results.find(r => r.testCaseId === tcId);
+      return {
+        testCaseId: tcId,
+        title: tc?.title || tcId,
+        suite: tc?.suite || "",
+        originalStatus: tc?.status || "",
+        runStatus: result?.status || "",
+        comment: result?.comment || "",
+      };
+    });
+
+    const payload = {
+      runId: selectedRun.id,
+      runName: selectedRun.name,
+      assignedTo: escalation.assignedTo.trim(),
+      severity: escalation.severity,
+      description: escalation.description.trim(),
+      status: "Open",
+      createdAt: new Date().toISOString(),
+      items,
+    };
+
+    try {
+      await fetch("http://localhost:3001/api/escalations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      setIsEscalateOpen(false);
+      setSelectedTcIds(new Set());
+      setDetailTab("escalated");
+      fetchData();
+    } catch (error) { console.error("Error creating escalation:", error); }
   };
 
-  const runAllPending = () => {
-    const pending = planTestCases.filter(tc => tc.status === "DRAFT" || tc.status === "READY");
-    if (pending.length > 0) {
-      startTest(pending[0].id);
-    }
-  };
+  const activeRuns = runs.filter(r => r.status !== "Completed");
+  const closedRuns = runs.filter(r => r.status === "Completed");
 
-  const getTimeAgo = (date: Date) => {
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    if (seconds < 60) return "Just now";
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes} min${minutes > 1 ? "s" : ""} ago`;
-    const hours = Math.floor(minutes / 60);
-    return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-  };
+  // ═══════════════════════════════════════════════════════════
+  //  DETAIL VIEW — Selected Test Run
+  // ═══════════════════════════════════════════════════════════
+  if (selectedRun) {
+    const stats = getRunStats(selectedRun);
+    const moduleTree = getModuleTree(selectedRun);
 
-  const getLogIcon = (action: string) => {
-    switch (action) {
-      case "PASSED": return { icon: "check_circle", bg: "bg-secondary/10", color: "text-secondary" };
-      case "FAILED": return { icon: "error", bg: "bg-error/10", color: "text-error" };
-      case "BLOCKED": return { icon: "block", bg: "bg-slate-100", color: "text-slate-500" };
-      case "STARTED": return { icon: "play_circle", bg: "bg-primary/10", color: "text-primary" };
-      default: return { icon: "info", bg: "bg-surface-container", color: "text-on-surface-variant" };
-    }
-  };
+    // Filter results by selected suite & search
+    const filteredResults = selectedRun.results.filter(r => {
+      const tc = getTcById(r.testCaseId);
+      if (!tc) return false;
+      if (selectedSuite && tc.suite !== selectedSuite) return false;
+      if (searchQuery && !tc.title.toLowerCase().includes(searchQuery.toLowerCase()) && !tc.id.includes(searchQuery)) return false;
+      if (statusFilter !== "All" && r.status !== statusFilter) return false;
+      if (originalFilter !== "All" && tc.status !== originalFilter) return false;
+      return true;
+    });
 
-  const activeTestCase = activeTestId ? testCases.find(t => t.id === activeTestId) : null;
+    const statusColors: Record<string, string> = {
+      Passed: "text-secondary",
+      Failed: "text-error",
+      Blocked: "text-tertiary",
+      Retest: "text-primary",
+      Skipped: "text-slate-400",
+      Untested: "text-on-surface-variant",
+    };
 
-  return (
-    <div className="flex-1 overflow-y-auto p-8 space-y-8 relative h-full">
-      <section className="space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider mb-1">
-              <span className="material-symbols-outlined text-[16px] animate-spin" style={{ fontVariationSettings: "'FILL' 1" }}>sync</span>
-              Active Execution Cycle
-            </div>
-            <h2 className="text-3xl font-extrabold tracking-tight text-on-surface">
-              {selectedPlan ? selectedPlan.name : "Test Execution"}
-            </h2>
-            <p className="text-on-surface-variant text-sm font-medium">
-              {selectedPlan ? `Owner: ${selectedPlan.owner || "Unassigned"} • ${totalCases} test cases` : "Select a test plan to begin execution"}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Plan Selector */}
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[18px]">assignment</span>
-              <select
-                value={selectedPlanId}
-                onChange={e => { setSelectedPlanId(e.target.value); setActiveTestId(null); }}
-                className="bg-surface border border-outline-variant px-4 py-2 rounded-lg font-semibold text-sm text-on-surface cursor-pointer outline-none hover:bg-surface-container-high transition-all shadow-sm min-w-[240px]"
-              >
-                <option value="">— Select a Test Plan —</option>
-                {plans.map(plan => {
-                  const casesCount = testCases.filter(tc => tc.planId === plan.id).length;
-                  return (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.name} ({casesCount} cases)
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-            <button onClick={runAllPending} disabled={!selectedPlanId || planTestCases.length === 0} className="gradient-primary text-white px-6 py-2 rounded-lg font-bold text-sm shadow-lg hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-              <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span> Run Next
+    const statusDots: Record<string, string> = {
+      Passed: "bg-secondary",
+      Failed: "bg-error",
+      Blocked: "bg-tertiary",
+      Retest: "bg-primary",
+      Skipped: "bg-slate-400",
+      Untested: "bg-on-surface-variant/40",
+    };
+
+    const barColors: Record<string, string> = {
+      Passed: "bg-secondary",
+      Failed: "bg-error",
+      Blocked: "bg-tertiary",
+      Retest: "bg-primary",
+      Skipped: "bg-slate-300",
+      Untested: "bg-outline-variant/30",
+    };
+
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden h-full bg-background">
+        {/* Header */}
+        <div className="px-8 py-5 border-b border-outline-variant/30 bg-surface shrink-0">
+          <div className="flex items-center gap-3 mb-3">
+            <button onClick={() => { setSelectedRun(null); setSelectedSuite(null); setSearchQuery(""); setStatusFilter("All"); setOriginalFilter("All"); setSelectedTcIds(new Set()); }} className="flex items-center gap-2 text-primary text-sm font-bold hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors">
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+              Back to Test Runs
             </button>
+            <span className="text-outline-variant">|</span>
+            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{selectedRun.id.toUpperCase()}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-extrabold font-headline text-on-surface tracking-tight">{selectedRun.name}</h2>
+              <div className="flex items-center gap-4 mt-1.5 text-sm text-on-surface-variant font-medium">
+                <span className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${selectedRun.status === "Completed" ? "text-secondary" : "text-primary"}`}>
+                  <span className={`w-2 h-2 rounded-full ${selectedRun.status === "Completed" ? "bg-secondary" : "bg-primary animate-pulse"}`}></span>
+                  {selectedRun.status}
+                </span>
+                <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">person</span>{selectedRun.assignedTo}</span>
+                <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">calendar_today</span>{selectedRun.createdAt}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={openEscalateModal} className="bg-error/10 border border-error/20 text-error px-5 py-2 rounded-lg font-bold text-sm hover:bg-error/20 active:scale-95 transition flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">flag</span>
+                Escalate{selectedTcIds.size > 0 ? ` (${selectedTcIds.size})` : ""}
+              </button>
+              {selectedRun.status !== "Completed" && (
+                <button onClick={() => closeRun(selectedRun)} className="bg-secondary text-white px-5 py-2 rounded-lg font-bold text-sm hover:brightness-110 active:scale-95 transition flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">check_circle</span> Close Run
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="mt-4 space-y-2">
+            <div className="flex h-2 rounded-full overflow-hidden bg-surface-container">
+              {["Passed", "Failed", "Blocked", "Retest", "Skipped", "Untested"].map(status => {
+                const count = selectedRun.results.filter(r => r.status === status).length;
+                const pct = stats.total > 0 ? (count / stats.total) * 100 : 0;
+                return pct > 0 ? <div key={status} className={`${barColors[status]} transition-all duration-500`} style={{ width: `${pct}%` }}></div> : null;
+              })}
+            </div>
+            <div className="flex flex-wrap gap-5 text-[11px] font-bold">
+              <span className="text-on-surface">{stats.percent}% Completed</span>
+              <span className="text-secondary">Passed {stats.passed} ({stats.total > 0 ? Math.round((stats.passed / stats.total) * 100) : 0}%)</span>
+              <span className="text-error">Failed {stats.failed} ({stats.total > 0 ? Math.round((stats.failed / stats.total) * 100) : 0}%)</span>
+              <span className="text-tertiary">Blocked {stats.blocked}</span>
+              <span className="text-primary">Retest {stats.retest}</span>
+              <span className="text-slate-400">Skipped {stats.skipped}</span>
+              <span className="text-on-surface-variant">Untested {stats.untested} ({stats.total > 0 ? Math.round((stats.untested / stats.total) * 100) : 0}%)</span>
+            </div>
           </div>
         </div>
 
-        {/* KPI Cards */}
-        {selectedPlanId && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-surface border border-outline-variant p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-8 -mt-8"></div>
-              <div className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 relative z-10">Completion</div>
-              <div className="flex items-baseline justify-between relative z-10">
-                <span className="text-3xl font-extrabold text-on-surface">{completionPercent}%</span>
-                <span className="text-xs font-bold text-primary">{passedCount + failedCount}/{totalCases}</span>
-              </div>
-              <div className="w-full h-2 bg-slate-100 rounded-full mt-4 overflow-hidden relative z-10">
-                <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${completionPercent}%` }}></div>
-              </div>
+        {/* Body — two panel */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left sidebar — Module/Suite tree */}
+          <div className="w-64 bg-surface border-r border-outline-variant/30 overflow-y-auto p-4 shrink-0 space-y-1">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Sort by: Module</span>
             </div>
-            <div className="bg-surface border border-outline-variant p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/5 rounded-bl-full -mr-8 -mt-8"></div>
-              <div className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">Passed</div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-secondary">{passedCount}</span>
-                {passedCount > 0 && (
-                  <span className="text-[10px] font-bold text-secondary/70 flex items-center gap-0.5">
-                    <span className="material-symbols-outlined text-[12px]">check</span>
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="bg-surface border border-outline-variant p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-error/5 rounded-bl-full -mr-8 -mt-8"></div>
-              <div className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">Failed</div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-error">{failedCount}</span>
-                {failedCount > 0 && (
-                  <span className="bg-error-container text-on-error-container px-2 py-0.5 rounded text-[9px] font-extrabold uppercase">Attention</span>
-                )}
-              </div>
-            </div>
-            <div className="bg-surface border border-outline-variant p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-slate-500/5 rounded-bl-full -mr-8 -mt-8"></div>
-              <div className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 text-slate-500">Blocked</div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-slate-500">{blockedCount}</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
 
-      {/* Main content */}
-      {!selectedPlanId ? (
-        <div className="flex flex-col items-center justify-center py-24">
-          <span className="material-symbols-outlined text-6xl text-outline-variant mb-4">assignment</span>
-          <h3 className="text-xl font-bold text-on-surface mb-2">Select a Test Plan</h3>
-          <p className="text-sm text-on-surface-variant mb-6 text-center max-w-md">
-            Choose a test plan from the dropdown above to view and execute its test cases. You can create plans and assign test cases from the Test Plans and Test Case Repository pages.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 pb-32">
-          <div className="xl:col-span-8 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-on-surface">Test Case Pipeline</h3>
+            {/* All button */}
+            <div
+              onClick={() => setSelectedSuite(null)}
+              className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors text-sm ${!selectedSuite ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container'}`}
+            >
+              <span>All Test Cases</span>
+              <span className="text-[10px] font-bold bg-surface-container px-1.5 py-0.5 rounded">{stats.total}</span>
+            </div>
+
+            {moduleTree.map(mod => (
+              <div key={mod.name} className="mt-2">
+                <div className="px-3 py-1.5 text-xs font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-2">
+                  <span className="material-symbols-outlined text-secondary text-[16px]">folder_open</span>
+                  {mod.name}
+                  <span className="ml-auto text-[10px] font-bold bg-surface-container px-1.5 py-0.5 rounded">{mod.total}</span>
+                </div>
+                {mod.suites.map(suite => (
+                  <div
+                    key={suite.name}
+                    onClick={() => setSelectedSuite(suite.name)}
+                    className={`ml-4 flex items-center justify-between px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm ${selectedSuite === suite.name ? 'bg-primary/10 text-primary font-bold' : 'text-on-surface-variant hover:bg-surface-container'}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[16px]">{selectedSuite === suite.name ? 'folder_open' : 'folder'}</span>
+                      {suite.name}
+                    </div>
+                    <span className="text-[10px] font-bold bg-surface-container px-1.5 py-0.5 rounded">{suite.total}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Right panel */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Tabs */}
+            {(() => {
+              const runEscalations = escalations.filter(e => e.runId === selectedRun.id);
+              const escalatedCount = runEscalations.reduce((sum: number, e: any) => sum + (e.items?.length || 0), 0);
+              return (
+                <div className="px-6 pt-3 bg-surface border-b border-outline-variant/30 flex items-center gap-6">
+                  <button onClick={() => setDetailTab("cases")} className={`pb-3 text-xs font-bold transition-all ${detailTab === "cases" ? "text-primary border-b-2 border-primary" : "text-on-surface-variant hover:text-on-surface"}`}>
+                    Test Cases
+                  </button>
+                  <button onClick={() => setDetailTab("escalated")} className={`pb-3 text-xs font-bold transition-all flex items-center gap-1.5 ${detailTab === "escalated" ? "text-error border-b-2 border-error" : "text-on-surface-variant hover:text-on-surface"}`}>
+                    Escalated Cases
+                    {escalatedCount > 0 && (
+                      <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-extrabold ${detailTab === "escalated" ? "bg-error text-white" : "bg-error/10 text-error"}`}>{escalatedCount}</span>
+                    )}
+                  </button>
+                </div>
+              );
+            })()}
+
+            {detailTab === "cases" && (
+            <>
+            {/* Toolbar */}
+            <div className="px-6 py-3 bg-surface border-b border-outline-variant/30 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Filter:</span>
+                <select
+                  value={originalFilter}
+                  onChange={e => setOriginalFilter(e.target.value)}
+                  className={`bg-surface-container-low border text-[11px] font-bold rounded py-1.5 px-3 cursor-pointer outline-none ${originalFilter !== "All" ? "border-primary text-primary" : "border-outline-variant"}`}
+                >
+                  <option value="All">Original: All</option>
+                  <option value="PASSED">Original: Passed</option>
+                  <option value="FAILED">Original: Failed</option>
+                  <option value="BLOCKED">Original: Blocked</option>
+                  <option value="DRAFT">Original: Draft</option>
+                  <option value="Active">Original: Active</option>
+                </select>
                 <select
                   value={statusFilter}
                   onChange={e => setStatusFilter(e.target.value)}
-                  className="bg-surface border border-outline-variant text-[11px] font-bold uppercase tracking-wider rounded-lg py-1 px-3 focus:outline-none cursor-pointer"
+                  className={`bg-surface-container-low border text-[11px] font-bold rounded py-1.5 px-3 cursor-pointer outline-none ${statusFilter !== "All" ? "border-primary text-primary" : "border-outline-variant"}`}
                 >
-                  <option value="All">All Statuses</option>
-                  <option value="DRAFT">Draft</option>
-                  <option value="READY">Ready</option>
-                  <option value="PASSED">Passed</option>
-                  <option value="FAILED">Failed</option>
-                  <option value="BLOCKED">Blocked</option>
+                  <option value="All">Run Status: All</option>
+                  <option value="Passed">Run: Passed</option>
+                  <option value="Failed">Run: Failed</option>
+                  <option value="Blocked">Run: Blocked</option>
+                  <option value="Retest">Run: Retest</option>
+                  <option value="Untested">Run: Untested</option>
                 </select>
+                {(originalFilter !== "All" || statusFilter !== "All") && (
+                  <button onClick={() => { setOriginalFilter("All"); setStatusFilter("All"); }} className="text-[10px] text-error font-bold hover:underline">Clear</button>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-1 max-w-xs">
+                <span className="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
+                <input
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search by Test Case ID or Title"
+                  className="flex-1 bg-surface-container-low border border-outline-variant px-3 py-1.5 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none"
+                />
               </div>
             </div>
-            <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+
+            {/* Heading */}
+            <div className="px-6 py-3 border-b border-outline-variant/20">
+              <h3 className="text-sm font-bold text-on-surface">{selectedSuite || "All Test Cases"}</h3>
+            </div>
+
+            {/* Table */}
+            <div className="flex-1 overflow-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-surface-container-high text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">
-                    <th className="px-6 py-4">ID</th>
-                    <th className="px-6 py-4">Test Description</th>
-                    <th className="px-6 py-4">Priority</th>
-                    <th className="px-6 py-4">Current Status</th>
-                    <th className="px-6 py-4 text-right">Action</th>
+                  <tr className="bg-surface-container border-b border-outline-variant sticky top-0 z-10">
+                    <th className="px-3 py-3 w-10">
+                      <input
+                        type="checkbox"
+                        checked={filteredResults.length > 0 && filteredResults.every(r => selectedTcIds.has(r.testCaseId))}
+                        onChange={() => {
+                          if (filteredResults.every(r => selectedTcIds.has(r.testCaseId))) {
+                            setSelectedTcIds(new Set());
+                          } else {
+                            setSelectedTcIds(new Set(filteredResults.map(r => r.testCaseId)));
+                          }
+                        }}
+                        className="rounded border border-outline-variant bg-surface text-primary w-4 h-4 cursor-pointer"
+                      />
+                    </th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">ID</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Title</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Original</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Run Status</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Comment</th>
+                    {selectedRun.status !== "Completed" && (
+                      <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant text-right">Actions</th>
+                    )}
                   </tr>
                 </thead>
-                <tbody className="text-sm divide-y divide-outline-variant/30">
-                  {filteredCases.map(tc => (
-                    <tr key={tc.id} className={`group hover:bg-slate-50 transition-colors ${activeTestId === tc.id ? "bg-primary/5" : ""}`}>
-                      <td className="px-6 py-4 font-mono text-xs text-primary font-bold">{tc.id.substring(0, 10)}</td>
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-on-surface">{tc.title}</div>
-                        <div className="text-[11px] text-on-surface-variant">{tc.type} • {tc.suite || "No suite"}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase ${tc.priority === "High" ? "bg-error-container text-on-error-container" : tc.priority === "Med" ? "bg-tertiary/10 text-tertiary" : "bg-slate-100 text-slate-500"}`}>
-                          {tc.priority === "High" ? "P0" : tc.priority === "Med" ? "P1" : "P2"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {activeTestId === tc.id ? (
-                          <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-tight">
-                            <span className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(0,95,184,0.4)]"></span>
-                            In Progress
-                          </div>
-                        ) : tc.status === "PASSED" ? (
-                          <div className="flex items-center gap-2 text-secondary font-bold text-xs uppercase tracking-tight">
-                            <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                            Passed
-                          </div>
-                        ) : tc.status === "FAILED" ? (
-                          <div className="flex items-center gap-2 text-error font-bold text-xs uppercase tracking-tight">
-                            <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
-                            Failed
-                          </div>
-                        ) : tc.status === "BLOCKED" ? (
-                          <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-tight">
-                            <span className="material-symbols-outlined text-[16px]">block</span>
-                            Blocked
-                          </div>
-                        ) : (
-                          <div className="text-slate-400 font-medium italic text-xs">Pending Pipeline...</div>
+                <tbody className="divide-y divide-outline-variant/20">
+                  {filteredResults.map(result => {
+                    const tc = getTcById(result.testCaseId);
+                    if (!tc) return null;
+                    const isEditingComment = editingCommentId === result.testCaseId;
+                    return (
+                      <tr key={result.testCaseId} className={`hover:bg-primary/5 transition-colors group ${selectedTcIds.has(tc.id) ? "bg-primary/5" : ""}`}>
+                        <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedTcIds.has(tc.id)}
+                            onChange={() => toggleTcSelection(tc.id)}
+                            className="rounded border border-outline-variant bg-surface text-primary w-4 h-4 cursor-pointer"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-xs font-bold text-primary font-mono">{tc.id.substring(0, 10)}</td>
+                        <td className="px-4 py-3 max-w-[200px]">
+                          <button onClick={() => setViewingTC(tc)} className="text-sm font-medium text-on-surface hover:text-primary hover:underline transition-colors text-left">
+                            {tc.title}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                            tc.status === "PASSED" ? "bg-secondary/10 text-secondary" :
+                            tc.status === "FAILED" ? "bg-error/10 text-error" :
+                            "bg-surface-container text-on-surface-variant"
+                          }`}>{tc.status}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`flex items-center gap-1.5 text-xs font-bold ${statusColors[result.status] || "text-on-surface-variant"}`}>
+                            <span className={`w-2 h-2 rounded-full ${statusDots[result.status] || "bg-slate-300"}`}></span>
+                            {result.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 max-w-[220px]">
+                          {isEditingComment ? (
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                autoFocus
+                                value={commentDraft}
+                                onChange={e => setCommentDraft(e.target.value)}
+                                onKeyDown={e => { if (e.key === "Enter") saveComment(selectedRun, result.testCaseId, commentDraft); if (e.key === "Escape") { setEditingCommentId(null); setCommentDraft(""); } }}
+                                className="flex-1 bg-surface border border-outline-variant px-2 py-1 rounded text-xs focus:ring-2 focus:ring-primary/40 focus:outline-none min-w-0"
+                                placeholder="Add a comment..."
+                              />
+                              <span onClick={() => saveComment(selectedRun, result.testCaseId, commentDraft)} className="material-symbols-outlined text-[14px] text-secondary cursor-pointer hover:scale-110 transition-transform">check</span>
+                              <span onClick={() => { setEditingCommentId(null); setCommentDraft(""); }} className="material-symbols-outlined text-[14px] text-on-surface-variant cursor-pointer hover:scale-110 transition-transform">close</span>
+                            </div>
+                          ) : (
+                            <div
+                              onClick={() => { if (selectedRun.status !== "Completed") { setEditingCommentId(result.testCaseId); setCommentDraft(result.comment || ""); } }}
+                              className={`text-xs cursor-pointer rounded px-2 py-1 transition-colors min-h-[28px] flex items-center ${result.comment ? "text-on-surface font-medium bg-surface-container-low" : "text-on-surface-variant/50 italic hover:bg-surface-container-low"}`}
+                            >
+                              {result.comment || (selectedRun.status !== "Completed" ? "Click to add..." : "—")}
+                            </div>
+                          )}
+                        </td>
+                        {selectedRun.status !== "Completed" && (
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => updateResultStatus(selectedRun, tc.id, "Passed")} className="p-1.5 rounded bg-secondary/10 text-secondary hover:bg-secondary hover:text-white transition-all" title="Pass">
+                                <span className="material-symbols-outlined text-[14px]">check</span>
+                              </button>
+                              <button onClick={() => updateResultStatus(selectedRun, tc.id, "Failed")} className="p-1.5 rounded bg-error/10 text-error hover:bg-error hover:text-white transition-all" title="Fail">
+                                <span className="material-symbols-outlined text-[14px]">close</span>
+                              </button>
+                              <button onClick={() => updateResultStatus(selectedRun, tc.id, "Blocked")} className="p-1.5 rounded bg-tertiary/10 text-tertiary hover:bg-tertiary hover:text-white transition-all" title="Block">
+                                <span className="material-symbols-outlined text-[14px]">block</span>
+                              </button>
+                              <button onClick={() => updateResultStatus(selectedRun, tc.id, "Retest")} className="p-1.5 rounded bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all" title="Retest">
+                                <span className="material-symbols-outlined text-[14px]">replay</span>
+                              </button>
+                              <button onClick={() => updateResultStatus(selectedRun, tc.id, "Skipped")} className="p-1.5 rounded bg-slate-100 text-slate-400 hover:bg-slate-300 hover:text-white transition-all" title="Skip">
+                                <span className="material-symbols-outlined text-[14px]">skip_next</span>
+                              </button>
+                            </div>
+                          </td>
                         )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        {activeTestId === tc.id ? (
-                          <div className="flex justify-end gap-2">
-                            <button onClick={() => updateTestCaseStatus(tc.id, "PASSED")} className="p-2 rounded-lg bg-secondary/10 text-secondary hover:bg-secondary hover:text-white transition-all" title="Pass">
-                              <span className="material-symbols-outlined text-sm">check</span>
-                            </button>
-                            <button onClick={() => updateTestCaseStatus(tc.id, "FAILED")} className="p-2 rounded-lg bg-error/10 text-error hover:bg-error hover:text-white transition-all" title="Fail">
-                              <span className="material-symbols-outlined text-sm">close</span>
-                            </button>
-                            <button onClick={() => updateTestCaseStatus(tc.id, "BLOCKED")} className="p-2 rounded-lg bg-slate-100 text-slate-400 hover:bg-slate-200 transition-all" title="Block">
-                              <span className="material-symbols-outlined text-sm">block</span>
-                            </button>
-                          </div>
-                        ) : tc.status === "PASSED" || tc.status === "FAILED" ? (
-                          <button onClick={() => startTest(tc.id)} className="text-xs font-black text-primary hover:underline uppercase tracking-wider">Retest Case</button>
-                        ) : (
-                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => startTest(tc.id)} className="px-4 py-1.5 rounded-lg gradient-primary text-white text-[10px] font-black uppercase tracking-wider shadow-sm">Start Test</button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredCases.length === 0 && (
+                      </tr>
+                    );
+                  })}
+                  {filteredResults.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center py-16">
-                        <div className="flex flex-col items-center">
-                          <span className="material-symbols-outlined text-5xl text-outline-variant mb-3">playlist_add</span>
-                          <p className="text-on-surface-variant font-bold text-lg mb-1">
-                            {planTestCases.length === 0 ? "No Test Cases in This Plan" : "No Cases Match Filter"}
-                          </p>
-                          <p className="text-sm text-on-surface-variant/70">
-                            {planTestCases.length === 0
-                              ? "Assign test cases to this plan from the Test Case Repository."
-                              : "Try changing the status filter above."}
-                          </p>
-                        </div>
+                      <td colSpan={6} className="text-center py-16">
+                        <span className="material-symbols-outlined text-4xl text-outline-variant mb-2">search_off</span>
+                        <p className="text-on-surface-variant font-bold">No test cases found</p>
+                        <p className="text-xs text-on-surface-variant/60 mt-1">Try changing the status filter or search query.</p>
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-          </div>
+            </>
+            )}
 
-          {/* Right sidebar - Execution Log */}
-          <div className="xl:col-span-4 flex flex-col gap-8">
-            <div className="bg-surface border border-outline-variant p-8 rounded-xl shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h4 className="font-extrabold text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">history</span> Execution Log
-                </h4>
-                <span className="text-[10px] font-black px-2 py-1 bg-secondary/10 text-secondary rounded uppercase tracking-wider">Real-time</span>
-              </div>
-              <div className="space-y-6 max-h-[500px] overflow-y-auto">
-                {executionLog.length === 0 ? (
-                  <div className="text-center py-8">
-                    <span className="material-symbols-outlined text-3xl text-outline-variant mb-2">hourglass_empty</span>
-                    <p className="text-sm text-on-surface-variant font-medium">No execution activity yet.</p>
-                    <p className="text-xs text-on-surface-variant/60 mt-1">Start testing to see the log here.</p>
-                  </div>
-                ) : (
-                  executionLog.map((log, idx) => {
-                    const style = getLogIcon(log.action);
-                    return (
-                      <div key={log.id} className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className={`w-10 h-10 rounded-full ${style.bg} flex items-center justify-center ${style.color}`}>
-                            <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>{style.icon}</span>
+            {/* ═══ Escalated Cases Tab ═══ */}
+            {detailTab === "escalated" && (() => {
+              const runEscalations = escalations.filter((e: any) => e.runId === selectedRun.id);
+
+              const severityColor: Record<string, string> = {
+                Critical: "bg-error text-white",
+                High: "bg-error/10 text-error",
+                Medium: "bg-tertiary/10 text-tertiary",
+                Low: "bg-slate-100 text-slate-500",
+              };
+
+              const escStatusColor: Record<string, string> = {
+                Open: "bg-error/10 text-error",
+                "In Progress": "bg-primary/10 text-primary",
+                Resolved: "bg-secondary/10 text-secondary",
+                Closed: "bg-surface-container text-on-surface-variant",
+              };
+
+              const updateEscStatus = async (escId: string, newStatus: string) => {
+                const esc = escalations.find((e: any) => e.id === escId);
+                if (!esc) return;
+                try {
+                  await fetch(`http://localhost:3001/api/escalations/${escId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ...esc, status: newStatus })
+                  });
+                  fetchData();
+                } catch (error) { console.error("Error updating escalation:", error); }
+              };
+
+              return (
+                <div className="flex-1 overflow-auto p-6 space-y-4">
+                  {runEscalations.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <span className="material-symbols-outlined text-5xl text-outline-variant mb-3">flag</span>
+                      <p className="text-on-surface-variant font-bold text-lg">No Escalations Yet</p>
+                      <p className="text-sm text-on-surface-variant/60 mt-1">Select failed test cases and click "Escalate" to create tickets.</p>
+                    </div>
+                  ) : (
+                    runEscalations.map((esc: any) => (
+                      <div key={esc.id} className="bg-surface border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+                        {/* Escalation header */}
+                        <div className="px-6 py-4 border-b border-outline-variant/20">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-full bg-error/10 flex items-center justify-center shrink-0">
+                                <span className="material-symbols-outlined text-error text-[18px]">flag</span>
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-bold text-on-surface">Escalation</span>
+                                  <span className="text-[10px] font-mono text-primary font-bold">{esc.id?.substring(0, 12)}</span>
+                                </div>
+                                <p className="text-[11px] text-on-surface-variant mt-0.5">
+                                  {new Date(esc.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${severityColor[esc.severity] || "bg-slate-100 text-slate-500"}`}>{esc.severity}</span>
+                              <select
+                                value={esc.status}
+                                onChange={e => updateEscStatus(esc.id, e.target.value)}
+                                className={`text-[10px] font-bold uppercase rounded px-2 py-1 border-none cursor-pointer outline-none ${escStatusColor[esc.status] || "bg-surface-container text-on-surface-variant"}`}
+                              >
+                                <option>Open</option>
+                                <option>In Progress</option>
+                                <option>Resolved</option>
+                                <option>Closed</option>
+                              </select>
+                            </div>
                           </div>
-                          {idx < executionLog.length - 1 && <div className="w-px h-full bg-outline-variant/30 mt-2"></div>}
+                          <div className="flex items-center gap-4 mt-3 text-xs text-on-surface-variant">
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">person</span> Assigned to <span className="font-bold text-on-surface">{esc.assignedTo}</span></span>
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">bug_report</span> <span className="font-bold text-on-surface">{esc.items?.length || 0}</span> test case(s)</span>
+                          </div>
+                          {esc.description && (
+                            <p className="mt-2 text-xs text-on-surface-variant bg-surface-container-low rounded-lg px-3 py-2 border border-outline-variant/20">{esc.description}</p>
+                          )}
                         </div>
-                        <div className="pb-2">
-                          <p className="text-sm font-bold text-on-surface leading-tight">
-                            <span className="text-primary">{log.testCaseId}</span>
-                            {log.action === "STARTED" ? (
-                              <> test <span className="text-primary font-black">STARTED</span></>
-                            ) : (
-                              <> was marked <span className={`font-black ${log.action === "PASSED" ? "text-secondary" : log.action === "FAILED" ? "text-error" : "text-slate-500"}`}>{log.action}</span></>
-                            )}
-                          </p>
-                          <p className="text-[11px] text-on-surface-variant mt-1">{getTimeAgo(log.timestamp)}</p>
-                        </div>
+
+                        {/* Escalated test cases */}
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-surface-container text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">
+                              <th className="px-6 py-2.5">Test Case</th>
+                              <th className="px-4 py-2.5">Original</th>
+                              <th className="px-4 py-2.5">Run Status</th>
+                              <th className="px-4 py-2.5">Tester Comment</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-outline-variant/10">
+                            {(esc.items || []).map((item: any, idx: number) => (
+                              <tr key={idx} className="hover:bg-primary/5 transition-colors">
+                                <td className="px-6 py-2.5">
+                                  <p className="text-xs font-bold text-on-surface">{item.title}</p>
+                                  <p className="text-[10px] text-primary font-mono">{item.testCaseId?.substring(0, 12)}</p>
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                                    item.originalStatus === "FAILED" ? "bg-error/10 text-error" :
+                                    item.originalStatus === "PASSED" ? "bg-secondary/10 text-secondary" :
+                                    "bg-surface-container text-on-surface-variant"
+                                  }`}>{item.originalStatus}</span>
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  <span className={`text-xs font-bold ${
+                                    item.runStatus === "Failed" ? "text-error" :
+                                    item.runStatus === "Passed" ? "text-secondary" :
+                                    "text-on-surface-variant"
+                                  }`}>{item.runStatus}</span>
+                                </td>
+                                <td className="px-4 py-2.5 text-xs text-on-surface-variant max-w-[200px]">{item.comment || "—"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-                    );
-                  })
+                    ))
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* ═══ Escalation Modal ═══ */}
+        {isEscalateOpen && selectedRun && (() => {
+          const escalateItems = Array.from(selectedTcIds).map(tcId => {
+            const tc = getTcById(tcId);
+            const result = selectedRun.results.find(r => r.testCaseId === tcId);
+            return { tc, result };
+          }).filter(item => item.tc);
+
+          return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-on-surface/50 backdrop-blur-sm px-4 py-6">
+              <div className="bg-surface w-full max-w-[700px] max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden border border-outline-variant flex flex-col">
+                {/* Header */}
+                <div className="px-8 py-5 border-b border-outline-variant/50 shrink-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-error text-xl">flag</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold font-headline text-on-surface">Escalate Issues</h3>
+                        <p className="text-xs text-on-surface-variant font-medium mt-0.5">{escalateItems.length} test case(s) from {selectedRun.name}</p>
+                      </div>
+                    </div>
+                    <span onClick={() => setIsEscalateOpen(false)} className="material-symbols-outlined cursor-pointer text-on-surface-variant hover:text-error bg-surface-container rounded-full p-1.5 transition-colors text-xl">close</span>
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
+                  {/* Ticket fields */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Assign To <span className="text-error">*</span></label>
+                      <input
+                        autoFocus
+                        value={escalation.assignedTo}
+                        onChange={e => setEscalation({ ...escalation, assignedTo: e.target.value })}
+                        className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none shadow-sm"
+                        placeholder="e.g. Developer Name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Severity</label>
+                      <select
+                        value={escalation.severity}
+                        onChange={e => setEscalation({ ...escalation, severity: e.target.value })}
+                        className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:outline-none cursor-pointer shadow-sm"
+                      >
+                        <option>Critical</option>
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Low</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Description / Notes</label>
+                    <textarea
+                      value={escalation.description}
+                      onChange={e => setEscalation({ ...escalation, description: e.target.value })}
+                      rows={3}
+                      className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none shadow-sm resize-none"
+                      placeholder="Describe the issue, steps to reproduce, or any additional context..."
+                    />
+                  </div>
+
+                  {/* Test cases being escalated */}
+                  <div>
+                    <p className="text-[11px] font-extrabold text-on-surface-variant uppercase tracking-wider mb-3">Test Cases Included</p>
+                    <div className="bg-surface border border-outline-variant rounded-xl overflow-hidden">
+                      <div className="max-h-[250px] overflow-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-surface-container border-b border-outline-variant text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">
+                              <th className="px-4 py-2.5">Test Case</th>
+                              <th className="px-4 py-2.5">Original</th>
+                              <th className="px-4 py-2.5">Run Status</th>
+                              <th className="px-4 py-2.5">Tester Comment</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-outline-variant/20">
+                            {escalateItems.map(({ tc, result }) => (
+                              <tr key={tc!.id} className="text-xs">
+                                <td className="px-4 py-2.5">
+                                  <p className="font-bold text-on-surface">{tc!.title}</p>
+                                  <p className="text-[10px] text-primary font-mono">{tc!.id.substring(0, 12)}</p>
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                                    tc!.status === "PASSED" ? "bg-secondary/10 text-secondary" :
+                                    tc!.status === "FAILED" ? "bg-error/10 text-error" :
+                                    "bg-surface-container text-on-surface-variant"
+                                  }`}>{tc!.status}</span>
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  <span className={`font-bold ${
+                                    result?.status === "Passed" ? "text-secondary" :
+                                    result?.status === "Failed" ? "text-error" :
+                                    "text-on-surface-variant"
+                                  }`}>{result?.status || "—"}</span>
+                                </td>
+                                <td className="px-4 py-2.5 text-on-surface-variant max-w-[150px] truncate">{result?.comment || "—"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Azure integration note */}
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-start gap-3">
+                    <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">info</span>
+                    <div>
+                      <p className="text-xs font-bold text-on-surface">Azure Boards Integration</p>
+                      <p className="text-[10px] text-on-surface-variant mt-0.5">In a future release, this escalation will automatically create a work item in Azure Boards with the assigned person, test case details, and tester comments attached.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex justify-end gap-3 px-8 py-4 border-t border-outline-variant/50 shrink-0 bg-surface">
+                  <button onClick={() => setIsEscalateOpen(false)} className="font-bold text-sm text-on-surface-variant hover:text-on-surface px-4 py-2 hover:bg-surface-container rounded-lg transition-colors">Cancel</button>
+                  <button
+                    onClick={submitEscalation}
+                    disabled={!escalation.assignedTo.trim() || escalateItems.length === 0}
+                    className="bg-error text-white font-bold text-sm px-6 py-2 rounded-lg shadow-md hover:brightness-110 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">flag</span>
+                    Escalate {escalateItems.length} Issue{escalateItems.length !== 1 ? "s" : ""}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Test Case Detail Slideout */}
+        {viewingTC && (
+          <div className="fixed inset-0 z-[100] flex justify-end" onClick={() => setViewingTC(null)}>
+            <div className="absolute inset-0 bg-on-surface/30 backdrop-blur-[2px]"></div>
+            <div className="relative w-full max-w-[560px] bg-surface h-full shadow-2xl border-l border-outline-variant/50 flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="px-8 py-5 border-b border-outline-variant/30 shrink-0">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest font-mono">{viewingTC.id.substring(0, 12)}</span>
+                  <span onClick={() => setViewingTC(null)} className="material-symbols-outlined cursor-pointer text-on-surface-variant hover:text-error bg-surface-container rounded-full p-1.5 transition-colors">close</span>
+                </div>
+                <h3 className="text-xl font-bold font-headline text-on-surface leading-snug">{viewingTC.title}</h3>
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                    viewingTC.priority === 'Critical' || viewingTC.priority === 'High' ? 'bg-error text-white' :
+                    viewingTC.priority === 'Medium' ? 'bg-tertiary/10 text-tertiary' : 'bg-slate-100 text-slate-500'
+                  }`}>{viewingTC.priority}</span>
+                  <span className="bg-surface-container px-2 py-0.5 rounded text-[10px] font-bold text-on-surface-variant">{viewingTC.type}</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                    viewingTC.status === "PASSED" ? "bg-secondary/10 text-secondary" :
+                    viewingTC.status === "FAILED" ? "bg-error/10 text-error" :
+                    "bg-secondary/10 text-secondary"
+                  }`}>{viewingTC.status}</span>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+                {/* Metadata */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Owner</p>
+                    <p className="text-sm font-semibold text-on-surface">{viewingTC.owner || "Unassigned"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Suite</p>
+                    <p className="text-sm font-semibold text-on-surface flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-secondary text-[16px]">folder</span>
+                      {viewingTC.suite || "None"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Last Run</p>
+                    <p className="text-sm font-semibold text-on-surface">{viewingTC.lastRun || "Never"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Automation</p>
+                    <p className="text-sm font-semibold text-on-surface">{viewingTC.automationStatus || "—"}</p>
+                  </div>
+                </div>
+
+                {/* Run-specific comment */}
+                {(() => {
+                  const runResult = selectedRun.results.find(r => r.testCaseId === viewingTC.id);
+                  if (!runResult) return null;
+                  return (
+                    <div>
+                      <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Run Comment</p>
+                      <div className={`rounded-lg p-3 border ${runResult.comment ? "bg-primary/5 border-primary/20" : "bg-surface-container-low border-outline-variant/30"}`}>
+                        <p className="text-sm text-on-surface">{runResult.comment || "No comment added for this run."}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Description */}
+                {viewingTC.description && (
+                  <div>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Description</p>
+                    <div className="bg-surface-container-low rounded-lg p-4 border border-outline-variant/30">
+                      <p className="text-sm text-on-surface whitespace-pre-wrap leading-relaxed">{viewingTC.description}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Preconditions */}
+                {viewingTC.preconditions && (
+                  <div>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Preconditions</p>
+                    <div className="bg-surface-container-low rounded-lg p-4 border border-outline-variant/30">
+                      <p className="text-sm text-on-surface whitespace-pre-wrap leading-relaxed">{viewingTC.preconditions}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Steps */}
+                {viewingTC.steps && viewingTC.steps.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Steps & Expected Results</p>
+                    <div className="space-y-3">
+                      {viewingTC.steps.map((step, idx) => (
+                        <div key={idx} className="flex gap-3">
+                          <div className="shrink-0 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-[11px] font-extrabold text-primary mt-0.5">{idx + 1}</div>
+                          <div className="flex-1 space-y-1.5">
+                            <div className="bg-surface-container-low rounded-lg p-3 border border-outline-variant/30">
+                              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Step</p>
+                              <p className="text-sm text-on-surface leading-relaxed">{step.step || "—"}</p>
+                            </div>
+                            {step.expected && (
+                              <div className="bg-secondary/5 rounded-lg p-3 border border-secondary/20">
+                                <p className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Expected Result</p>
+                                <p className="text-sm text-on-surface leading-relaxed">{step.expected}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* No details fallback */}
+                {!viewingTC.description && !viewingTC.preconditions && (!viewingTC.steps || viewingTC.steps.length === 0) && (
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <span className="material-symbols-outlined text-4xl text-outline-variant mb-3">article</span>
+                    <p className="text-on-surface-variant font-bold">No details added yet</p>
+                    <p className="text-xs text-on-surface-variant/60 mt-1">This test case has no description, preconditions, or steps.</p>
+                  </div>
                 )}
               </div>
             </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
-            {/* Plan Info */}
-            {selectedPlan && (
-              <div className="bg-surface border border-outline-variant p-6 rounded-xl shadow-sm">
-                <h4 className="font-extrabold text-on-surface text-sm mb-4 flex items-center justify-between">
-                  <span>Plan Details</span>
-                  <span className="material-symbols-outlined text-on-surface-variant">info</span>
-                </h4>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-[11px]">
-                    <span className="font-bold uppercase tracking-wider text-on-surface-variant">Owner</span>
-                    <span className="font-bold text-on-surface">{selectedPlan.owner || "Unassigned"}</span>
+  // ═══════════════════════════════════════════════════════════
+  //  LIST VIEW — All Test Runs
+  // ═══════════════════════════════════════════════════════════
+  const displayedRuns = listTab === "active" ? activeRuns : closedRuns;
+
+  return (
+    <div className="flex-1 overflow-y-auto w-full bg-background">
+      <div className="p-8 space-y-6 max-w-[1200px] mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-extrabold font-headline text-on-surface tracking-tight">Test Runs</h2>
+          <button onClick={() => setIsCreateOpen(true)} className="gradient-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            Create Manual Run
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-8 border-b border-outline-variant/20">
+          <button onClick={() => setListTab("active")} className={`pb-3 text-sm font-bold transition-all flex items-center gap-2 ${listTab === "active" ? "text-primary border-b-2 border-primary" : "text-on-surface-variant hover:text-on-surface"}`}>
+            Active Runs
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${listTab === "active" ? "bg-primary text-white" : "bg-surface-container text-on-surface-variant"}`}>{activeRuns.length}</span>
+          </button>
+          <button onClick={() => setListTab("closed")} className={`pb-3 text-sm font-bold transition-all flex items-center gap-2 ${listTab === "closed" ? "text-primary border-b-2 border-primary" : "text-on-surface-variant hover:text-on-surface"}`}>
+            Closed Runs
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${listTab === "closed" ? "bg-primary text-white" : "bg-surface-container text-on-surface-variant"}`}>{closedRuns.length}</span>
+          </button>
+        </div>
+
+        {/* Runs list */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20 opacity-50"><p>Loading runs...</p></div>
+        ) : (
+          <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+            {/* Table header */}
+            <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-surface-container border-b border-outline-variant text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+              <div className="col-span-5">Runs</div>
+              <div className="col-span-1 text-center">Tests</div>
+              <div className="col-span-3 text-center">Test Status</div>
+              <div className="col-span-3 text-center">Failure Analysis</div>
+            </div>
+
+            {/* Rows */}
+            {displayedRuns.map(run => {
+              const stats = getRunStats(run);
+              return (
+                <div
+                  key={run.id}
+                  onClick={() => { setSelectedRun(run); setSelectedSuite(null); setSearchQuery(""); setStatusFilter("All"); }}
+                  className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-outline-variant/20 hover:bg-primary/5 transition-colors cursor-pointer group items-center"
+                >
+                  <div className="col-span-5 flex items-center gap-4">
+                    {/* Progress circle */}
+                    <div className="relative w-10 h-10 shrink-0">
+                      <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E5E7EB" strokeWidth="3" />
+                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={stats.percent === 100 ? "#00B7C3" : "#005FB8"} strokeWidth="3" strokeDasharray={`${stats.percent}, 100`} strokeLinecap="round" />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-extrabold text-on-surface">{stats.percent}%</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
+                        {run.name} <span className="text-primary font-mono text-xs">{run.id.toUpperCase()}</span>
+                      </p>
+                      <p className="text-[11px] text-on-surface-variant font-medium">Assigned to {run.assignedTo}</p>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-[11px]">
-                    <span className="font-bold uppercase tracking-wider text-on-surface-variant">Status</span>
-                    <span className={`font-bold ${selectedPlan.status === "In Progress" ? "text-primary" : selectedPlan.status === "Completed" ? "text-secondary" : "text-on-surface-variant"}`}>{selectedPlan.status}</span>
+                  <div className="col-span-1 text-center">
+                    <span className="text-sm font-bold text-on-surface">{stats.total} Tests</span>
                   </div>
-                  <div className="flex justify-between text-[11px]">
-                    <span className="font-bold uppercase tracking-wider text-on-surface-variant">Timeline</span>
-                    <span className="font-bold text-on-surface">
-                      {selectedPlan.startDate ? new Date(selectedPlan.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"} — {selectedPlan.endDate ? new Date(selectedPlan.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+                  <div className="col-span-3 flex items-center justify-center gap-1.5">
+                    {stats.passed > 0 && <span className="bg-secondary text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md min-w-[28px] text-center">{stats.passed}</span>}
+                    {stats.failed > 0 && <span className="bg-error text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md min-w-[28px] text-center">{stats.failed}</span>}
+                    {stats.blocked > 0 && <span className="bg-tertiary text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md min-w-[28px] text-center">{stats.blocked}</span>}
+                    {stats.untested > 0 && <span className="bg-slate-300 text-slate-700 text-[10px] font-extrabold px-2 py-0.5 rounded-md min-w-[28px] text-center">{stats.untested}</span>}
+                  </div>
+                  <div className="col-span-3 text-center">
+                    <span className="text-sm font-medium text-on-surface-variant">
+                      {stats.failed > 0 ? `${stats.failed} failure${stats.failed > 1 ? "s" : ""}` : "—"}
                     </span>
                   </div>
-                  {selectedPlan.description && (
-                    <div className="pt-2 border-t border-outline-variant/20">
-                      <p className="text-xs text-on-surface-variant leading-relaxed">{selectedPlan.description}</p>
-                    </div>
-                  )}
                 </div>
+              );
+            })}
+
+            {displayedRuns.length === 0 && (
+              <div className="text-center py-16">
+                <span className="material-symbols-outlined text-5xl text-outline-variant mb-3">playlist_play</span>
+                <p className="text-on-surface-variant font-bold text-lg mb-1">No {listTab === "active" ? "Active" : "Closed"} Runs</p>
+                <p className="text-sm text-on-surface-variant/70">
+                  {listTab === "active" ? "Create a new test run to get started." : "No runs have been closed yet."}
+                </p>
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Floating action bar when a test is active */}
-      {activeTestCase && (
-        <div className="fixed bottom-6 right-8 xl:left-[calc(16rem+2rem)] sm:left-8 z-50">
-          <div className="bg-white/70 backdrop-blur-xl border border-white/40 px-8 py-4 rounded-2xl flex items-center justify-between text-on-surface shadow-2xl">
-            <div className="flex items-center gap-10">
-              <div className="flex items-center gap-3">
-                <span className="w-3 h-3 bg-secondary rounded-full animate-pulse shadow-[0_0_12px_rgba(0,183,195,0.6)]"></span>
-                <div>
-                  <div className="text-[9px] uppercase tracking-widest font-black text-on-surface-variant opacity-70">Currently Testing</div>
-                  <div className="text-sm font-extrabold text-on-surface">{activeTestCase.id.substring(0, 10)}: {activeTestCase.title}</div>
-                </div>
+      {/* ═══ Create Run Modal ═══ */}
+      {isCreateOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-on-surface/50 backdrop-blur-sm px-4">
+          <form onSubmit={submitCreateRun} className="bg-surface w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden p-8 border border-outline-variant">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold font-headline text-on-surface">Create Test Run</h3>
+              <span onClick={() => setIsCreateOpen(false)} className="material-symbols-outlined cursor-pointer text-on-surface-variant hover:text-error bg-surface-container rounded-full p-1 transition-colors">close</span>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Run Name <span className="text-error">*</span></label>
+                <input autoFocus required value={newRun.name} onChange={e => setNewRun({ ...newRun, name: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none transition shadow-sm" placeholder="e.g. Test Run - 2026-04-14" />
               </div>
-              <div className="h-8 w-px bg-outline-variant/50 hidden md:block"></div>
-              <div className="hidden md:flex gap-8">
-                <div className="text-center">
-                  <div className="text-[9px] uppercase font-black text-on-surface-variant opacity-70">Priority</div>
-                  <div className={`text-sm font-bold ${activeTestCase.priority === "High" ? "text-error" : "text-primary"}`}>{activeTestCase.priority}</div>
+              <div>
+                <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Assigned To</label>
+                <input value={newRun.assignedTo} onChange={e => setNewRun({ ...newRun, assignedTo: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none transition shadow-sm" placeholder="e.g. Sambhav Suri" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Project <span className="text-error">*</span></label>
+                <select required value={newRun.projectId} onChange={e => setNewRun({ ...newRun, projectId: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:outline-none cursor-pointer shadow-sm">
+                  <option value="">— Select Project —</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} ({testCases.filter(tc => tc.projectId === p.id).length} cases)</option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-medium">All test cases from this project will be included in the run.</p>
+              </div>
+
+              {/* Include existing results toggle */}
+              {newRun.projectId && (
+                <div className="bg-surface-container-low rounded-lg p-4 border border-outline-variant/30 space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeExistingResults}
+                      onChange={e => setIncludeExistingResults(e.target.checked)}
+                      className="rounded border border-outline-variant bg-surface text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer mt-0.5"
+                    />
+                    <div>
+                      <p className="text-sm font-bold text-on-surface">Include existing test case results</p>
+                      <p className="text-[10px] text-on-surface-variant mt-0.5">
+                        Carry over Passed/Failed/Blocked statuses from test cases. Useful for re-verification runs — filter by Failed to retest only the failures.
+                      </p>
+                    </div>
+                  </label>
+                  {includeExistingResults && (() => {
+                    const cases = testCases.filter(tc => tc.projectId === newRun.projectId);
+                    const passed = cases.filter(tc => tc.status.toUpperCase() === "PASSED").length;
+                    const failed = cases.filter(tc => tc.status.toUpperCase() === "FAILED").length;
+                    const other = cases.length - passed - failed;
+                    return (
+                      <div className="flex gap-3 text-[10px] font-bold pl-7">
+                        <span className="text-secondary">{passed} Passed</span>
+                        <span className="text-error">{failed} Failed</span>
+                        <span className="text-on-surface-variant">{other} Untested</span>
+                      </div>
+                    );
+                  })()}
                 </div>
-                <div className="text-center">
-                  <div className="text-[9px] uppercase font-black text-on-surface-variant opacity-70">Type</div>
-                  <div className="text-sm font-bold">{activeTestCase.type}</div>
-                </div>
+              )}
+
+              <div>
+                <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Test Plan (optional)</label>
+                <select value={newRun.planId} onChange={e => setNewRun({ ...newRun, planId: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:outline-none cursor-pointer shadow-sm">
+                  <option value="">No Plan</option>
+                  {plans.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
-            <div className="flex gap-3">
-              <button onClick={() => updateTestCaseStatus(activeTestCase.id, "PASSED")} className="px-5 py-2.5 bg-secondary text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[16px]">check</span> Pass
-              </button>
-              <button onClick={() => updateTestCaseStatus(activeTestCase.id, "FAILED")} className="px-5 py-2.5 bg-error text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[16px]">close</span> Fail
-              </button>
-              <button onClick={() => updateTestCaseStatus(activeTestCase.id, "BLOCKED")} className="p-2.5 bg-slate-100 hover:bg-slate-200 text-on-surface-variant rounded-xl transition-colors" title="Block">
-                <span className="material-symbols-outlined text-[18px]">block</span>
-              </button>
-              <button onClick={() => setActiveTestId(null)} className="p-2.5 bg-slate-100 hover:bg-slate-200 text-on-surface-variant rounded-xl transition-colors" title="Cancel">
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
+            <div className="mt-8 flex justify-end gap-3">
+              <button type="button" onClick={() => setIsCreateOpen(false)} className="font-bold text-sm text-on-surface-variant hover:text-on-surface px-4 py-2 hover:bg-surface-container rounded-lg transition-colors">Cancel</button>
+              <button type="submit" className="gradient-primary text-white font-bold text-sm px-6 py-2 rounded-lg shadow-md hover:brightness-110 active:scale-95 transition">Create Run</button>
             </div>
-          </div>
+          </form>
         </div>
       )}
     </div>
