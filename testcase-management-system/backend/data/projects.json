@@ -1,0 +1,19 @@
+[
+  {
+    "id": "proj-1",
+    "name": "Project Alpha",
+    "modules": [
+      {
+        "name": "Module A",
+        "suites": [
+          "Suite B",
+          "Suite C"
+        ]
+      },
+      {
+        "name": "Module B",
+        "suites": []
+      }
+    ]
+  }
+]

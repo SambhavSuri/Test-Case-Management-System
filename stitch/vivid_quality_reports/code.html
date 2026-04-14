@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#7fdede",
+                    "surface-dim": "#d0d5d8",
+                    "on-tertiary-fixed-variant": "#5e4000",
+                    "secondary-container": "#8dedec",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error": "#ffefee",
+                    "on-surface-variant": "#595c5e",
+                    "primary-container": "#62a1fe",
+                    "on-secondary-container": "#005858",
+                    "secondary-dim": "#005959",
+                    "tertiary-fixed": "#feb300",
+                    "on-tertiary-container": "#523700",
+                    "on-tertiary": "#fff1df",
+                    "on-primary-container": "#00224a",
+                    "primary-dim": "#004f9b",
+                    "tertiary-dim": "#6b4900",
+                    "on-background": "#2c2f31",
+                    "inverse-on-surface": "#9a9d9f",
+                    "primary": "#005bb0",
+                    "error-container": "#fb5151",
+                    "surface-container-highest": "#d9dde0",
+                    "surface-container-high": "#dfe3e6",
+                    "outline": "#747779",
+                    "inverse-primary": "#5f9efb",
+                    "surface-tint": "#005bb0",
+                    "secondary": "#006666",
+                    "on-secondary-fixed": "#004343",
+                    "on-primary": "#eff2ff",
+                    "surface-variant": "#d9dde0",
+                    "on-primary-fixed": "#000000",
+                    "tertiary-fixed-dim": "#eda600",
+                    "inverse-surface": "#0b0f10",
+                    "on-tertiary-fixed": "#382400",
+                    "on-secondary": "#bbfffe",
+                    "primary-fixed-dim": "#5494f0",
+                    "outline-variant": "#abadaf",
+                    "on-surface": "#2c2f31",
+                    "background": "#f5f7f9",
+                    "surface-container": "#e5e9eb",
+                    "on-primary-fixed-variant": "#002c5a",
+                    "tertiary-container": "#feb300",
+                    "surface-bright": "#f5f7f9",
+                    "on-secondary-fixed-variant": "#006262",
+                    "surface": "#f5f7f9",
+                    "on-error-container": "#570008",
+                    "error": "#b31b25",
+                    "secondary-fixed": "#8dedec",
+                    "primary-fixed": "#62a1fe",
+                    "error-dim": "#9f0519",
+                    "tertiary": "#7b5400",
+                    "surface-container-low": "#eef1f3"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(171, 173, 175, 0.15);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .architectural-breadcrumb::after {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 1px;
+            background-color: rgba(171, 173, 175, 0.1);
+            margin: 0 12px;
+            vertical-align: middle;
+        }
+        .chart-gradient-1 { background: linear-gradient(135deg, #005bb0, #62a1fe); }
+        .chart-gradient-2 { background: linear-gradient(135deg, #006666, #8dedec); }
+        .chart-gradient-3 { background: linear-gradient(135deg, #7b5400, #feb300); }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface flex min-h-screen">
+<!-- Sidebar Navigation -->
+<aside class="h-screen w-64 flex flex-col sticky top-0 bg-[#eef1f3] dark:bg-slate-900 py-6 px-4 gap-2 z-50">
+<div class="mb-8 px-2">
+<h1 class="text-xl font-extrabold tracking-tighter text-slate-900 dark:text-white">QualityGuard</h1>
+<p class="text-xs font-label text-on-surface-variant tracking-wider uppercase opacity-70">Enterprise TCMS</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors scale-95 active:scale-100 font-['Manrope'] font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors scale-95 active:scale-100 font-['Manrope'] font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="folder">folder</span>
+                Projects
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors scale-95 active:scale-100 font-['Manrope'] font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="rule">rule</span>
+                Test Cases
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors scale-95 active:scale-100 font-['Manrope'] font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+                Test Plans
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors scale-95 active:scale-100 font-['Manrope'] font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>
+                Requirements
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#005bb0] dark:text-[#62a1fe] font-bold bg-white dark:bg-slate-800 rounded-md shadow-sm transition-colors scale-95 active:scale-100 font-['Manrope'] text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+                Reports
+            </a>
+</nav>
+<div class="mt-auto pt-6 border-t border-outline-variant/10 space-y-1">
+<button class="w-full mb-4 bg-gradient-to-br from-primary to-primary-container text-white py-2.5 rounded-xl text-sm font-semibold shadow-md active:scale-95 transition-transform">
+                New Project
+            </button>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors font-['Manrope'] font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors font-['Manrope'] font-medium text-sm tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+                Support
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+<!-- Top Navbar -->
+<header class="w-full h-16 sticky top-0 z-40 bg-[#f5f7f9]/80 dark:bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-8 border-b border-slate-200/50 dark:border-slate-800/50">
+<div class="flex items-center gap-4">
+<span class="text-lg font-bold text-slate-800 dark:text-slate-100">QualityGuard Pro</span>
+<div class="hidden md:flex items-center bg-surface-container rounded-full px-4 py-1.5 focus-within:ring-2 focus-within:ring-[#62a1fe] transition-all">
+<span class="material-symbols-outlined text-outline text-lg mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-64 text-on-surface" placeholder="Search reports..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer hover:text-primary transition-colors" data-icon="notifications_none">notifications_none</span>
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer hover:text-primary transition-colors" data-icon="history">history</span>
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer hover:text-primary transition-colors" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="p-8 max-w-[1600px] mx-auto w-full">
+<!-- Breadcrumb & Header -->
+<div class="mb-8">
+<nav class="flex items-center mb-2">
+<span class="architectural-breadcrumb text-[10px] uppercase tracking-widest font-bold text-primary-dim">ANALYTICS</span>
+<span class="text-[10px] uppercase tracking-widest font-bold text-outline">Q4 PERFORMANCE REPORT</span>
+</nav>
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-4xl font-extrabold font-headline tracking-tight text-on-surface">Reports &amp; Analytics</h2>
+<p class="text-on-surface-variant mt-1 text-sm">Comprehensive quality metrics for the Alpha Release Cycle</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 text-sm font-semibold border border-outline-variant/20 rounded-lg hover:bg-surface-container transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+                            Filter Data
+                        </button>
+<button class="px-4 py-2 text-sm font-bold bg-primary text-white rounded-lg shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span>
+                            Export PDF
+                        </button>
+</div>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Sidebar Report Types -->
+<div class="col-span-3 flex flex-col gap-4">
+<div class="bg-surface-container-low p-5 rounded-full">
+<h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4 px-1">Report Library</h3>
+<div class="space-y-2">
+<div class="p-3 rounded-xl bg-white shadow-sm flex items-center gap-3 border border-primary/10">
+<div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg" data-icon="summarize">summarize</span>
+</div>
+<div>
+<p class="text-sm font-bold leading-tight">Summary Report</p>
+<p class="text-[10px] text-on-surface-variant">Daily execution snapshot</p>
+</div>
+</div>
+<div class="p-3 rounded-xl hover:bg-surface-container-high transition-colors cursor-pointer flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-lg" data-icon="lan">lan</span>
+</div>
+<div>
+<p class="text-sm font-semibold leading-tight">Traceability Report</p>
+<p class="text-[10px] text-on-surface-variant">Requirement coverage map</p>
+</div>
+</div>
+<div class="p-3 rounded-xl hover:bg-surface-container-high transition-colors cursor-pointer flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-lg" data-icon="play_circle">play_circle</span>
+</div>
+<div>
+<p class="text-sm font-semibold leading-tight">Execution Report</p>
+<p class="text-[10px] text-on-surface-variant">Run-by-run detailed logs</p>
+</div>
+</div>
+<div class="p-3 rounded-xl hover:bg-surface-container-high transition-colors cursor-pointer flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-error/10 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-lg" data-icon="bug_report">bug_report</span>
+</div>
+<div>
+<p class="text-sm font-semibold leading-tight">Defect Trend</p>
+<p class="text-[10px] text-on-surface-variant">Resolution velocity</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Insight -->
+<div class="bg-primary p-6 rounded-full text-white overflow-hidden relative group">
+<div class="relative z-10">
+<p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80 mb-1">Live Update</p>
+<h4 class="text-xl font-bold font-headline mb-4">Quality Threshold</h4>
+<div class="flex items-end gap-2 mb-2">
+<span class="text-4xl font-extrabold tracking-tighter">94.2%</span>
+<span class="text-primary-container font-bold text-sm mb-1">+2.4%</span>
+</div>
+<p class="text-xs text-on-primary opacity-90 leading-relaxed">System-wide stability has improved significantly in the last 24 hours following the patch deployment.</p>
+</div>
+<div class="absolute -bottom-6 -right-6 w-32 h-32 bg-primary-container rounded-full opacity-20 group-hover:scale-110 transition-transform"></div>
+</div>
+</div>
+<!-- Main Analytics Area -->
+<div class="col-span-9 grid grid-cols-3 gap-6">
+<!-- KPI Widgets -->
+<div class="bg-surface-container-lowest p-6 rounded-full shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="timer">timer</span>
+</div>
+<span class="text-[10px] font-bold text-secondary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]" data-icon="trending_down">trending_down</span> 12%
+                            </span>
+</div>
+<p class="text-on-surface-variant text-xs font-medium uppercase tracking-wider mb-1">Execution Time</p>
+<h3 class="text-2xl font-extrabold tracking-tight">142h <span class="text-sm font-normal text-outline">32m</span></h3>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-full shadow-sm hover:shadow-md transition-shadow border-l-4 border-error">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-full bg-error-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-error text-xl" data-icon="density_medium">density_medium</span>
+</div>
+<span class="text-[10px] font-bold text-error flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]" data-icon="trending_up">trending_up</span> 0.8%
+                            </span>
+</div>
+<p class="text-on-surface-variant text-xs font-medium uppercase tracking-wider mb-1">Defect Density</p>
+<h3 class="text-2xl font-extrabold tracking-tight">2.4 <span class="text-sm font-normal text-outline">per KLOC</span></h3>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-full shadow-sm hover:shadow-md transition-shadow border-l-4 border-secondary">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-xl" data-icon="attach_money">attach_money</span>
+</div>
+<span class="text-[10px] font-bold text-secondary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]" data-icon="check_circle">check_circle</span> HIGH
+                            </span>
+</div>
+<p class="text-on-surface-variant text-xs font-medium uppercase tracking-wider mb-1">Automation ROI</p>
+<h3 class="text-2xl font-extrabold tracking-tight">$42.8k <span class="text-sm font-normal text-outline">saved</span></h3>
+</div>
+<!-- Line Chart: Execution Trends -->
+<div class="col-span-2 bg-surface-container-lowest p-8 rounded-full shadow-sm">
+<div class="flex justify-between items-center mb-8">
+<h4 class="text-sm font-bold uppercase tracking-widest text-on-surface">Execution Trends over Time</h4>
+<div class="flex gap-4 text-[10px] font-bold">
+<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-primary"></span> SUCCESS</div>
+<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-error"></span> FAILED</div>
+</div>
+</div>
+<!-- Mock Line Chart Area -->
+<div class="relative h-56 flex items-end justify-between px-2">
+<svg class="absolute inset-0 w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 400 100">
+<!-- Grid Lines -->
+<line class="text-outline/10" stroke="currentColor" stroke-width="0.5" x1="0" x2="400" y1="20" y2="20"></line>
+<line class="text-outline/10" stroke="currentColor" stroke-width="0.5" x1="0" x2="400" y1="50" y2="50"></line>
+<line class="text-outline/10" stroke="currentColor" stroke-width="0.5" x1="0" x2="400" y1="80" y2="80"></line>
+<!-- Path 1 (Success) -->
+<path d="M0 80 Q 50 60, 100 70 T 200 30 T 300 40 T 400 10" fill="none" stroke="#005bb0" stroke-width="2.5"></path>
+<!-- Path 2 (Failure) -->
+<path d="M0 95 Q 80 85, 150 90 T 250 80 T 350 85 T 400 75" fill="none" stroke="#b31b25" stroke-dasharray="4 2" stroke-width="2.5"></path>
+</svg>
+<div class="flex flex-col items-center gap-2"><div class="h-1 text-[9px] text-outline">MON</div></div>
+<div class="flex flex-col items-center gap-2"><div class="h-1 text-[9px] text-outline">TUE</div></div>
+<div class="flex flex-col items-center gap-2"><div class="h-1 text-[9px] text-outline">WED</div></div>
+<div class="flex flex-col items-center gap-2"><div class="h-1 text-[9px] text-outline">THU</div></div>
+<div class="flex flex-col items-center gap-2"><div class="h-1 text-[9px] text-outline">FRI</div></div>
+<div class="flex flex-col items-center gap-2"><div class="h-1 text-[9px] text-outline">SAT</div></div>
+<div class="flex flex-col items-center gap-2"><div class="h-1 text-[9px] text-outline">SUN</div></div>
+</div>
+</div>
+<!-- Test Module Distribution (Vertical Bento) -->
+<div class="bg-surface-container-lowest p-6 rounded-full shadow-sm flex flex-col">
+<h4 class="text-xs font-bold uppercase tracking-widest text-on-surface mb-6">Execution Breakdown</h4>
+<div class="flex-1 flex flex-col justify-center items-center">
+<div class="relative w-32 h-32">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle class="text-surface-container-low" cx="18" cy="18" fill="none" r="15.9" stroke="currentColor" stroke-width="3"></circle>
+<circle class="text-primary" cx="18" cy="18" fill="none" r="15.9" stroke="currentColor" stroke-dasharray="75 100" stroke-width="3"></circle>
+<circle class="text-secondary" cx="18" cy="18" fill="none" r="15.9" stroke="currentColor" stroke-dasharray="15 100" stroke-dashoffset="-75" stroke-width="3"></circle>
+<circle class="text-error" cx="18" cy="18" fill="none" r="15.9" stroke="currentColor" stroke-dasharray="10 100" stroke-dashoffset="-90" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center flex-col">
+<span class="text-xl font-bold leading-none">1,204</span>
+<span class="text-[8px] text-outline uppercase font-bold">TOTAL</span>
+</div>
+</div>
+<div class="mt-6 w-full space-y-2">
+<div class="flex justify-between items-center text-[10px] font-semibold">
+<span class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-primary rounded-full"></span> Automated</span>
+<span>75%</span>
+</div>
+<div class="flex justify-between items-center text-[10px] font-semibold">
+<span class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-secondary rounded-full"></span> Manual</span>
+<span>15%</span>
+</div>
+<div class="flex justify-between items-center text-[10px] font-semibold">
+<span class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-error rounded-full"></span> Skipped</span>
+<span>10%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Stacked Bar Chart: Test Status by Module -->
+<div class="col-span-3 bg-surface-container-lowest p-8 rounded-full shadow-sm">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h4 class="text-sm font-bold uppercase tracking-widest text-on-surface">Test Status by Module</h4>
+<p class="text-[10px] text-outline mt-0.5">Top performing vs critical fail zones</p>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2 bg-surface-container-low px-3 py-1 rounded-lg text-[10px] font-bold">
+                                    MODULE: ALL <span class="material-symbols-outlined text-[12px]" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</div>
+<div class="space-y-6">
+<!-- Module 1 -->
+<div class="space-y-2">
+<div class="flex justify-between items-center px-1">
+<span class="text-xs font-bold text-on-surface">Core Auth Module</span>
+<span class="text-[10px] font-bold text-outline">98% PASS</span>
+</div>
+<div class="h-3 w-full bg-surface-container-low rounded-full overflow-hidden flex">
+<div class="h-full bg-primary" style="width: 92%"></div>
+<div class="h-full bg-tertiary" style="width: 6%"></div>
+<div class="h-full bg-error" style="width: 2%"></div>
+</div>
+</div>
+<!-- Module 2 -->
+<div class="space-y-2">
+<div class="flex justify-between items-center px-1">
+<span class="text-xs font-bold text-on-surface">Payment Gateway</span>
+<span class="text-[10px] font-bold text-outline">82% PASS</span>
+</div>
+<div class="h-3 w-full bg-surface-container-low rounded-full overflow-hidden flex">
+<div class="h-full bg-primary" style="width: 82%"></div>
+<div class="h-full bg-tertiary" style="width: 5%"></div>
+<div class="h-full bg-error" style="width: 13%"></div>
+</div>
+</div>
+<!-- Module 3 -->
+<div class="space-y-2">
+<div class="flex justify-between items-center px-1">
+<span class="text-xs font-bold text-on-surface">Data Visualization</span>
+<span class="text-[10px] font-bold text-outline">65% PASS</span>
+</div>
+<div class="h-3 w-full bg-surface-container-low rounded-full overflow-hidden flex">
+<div class="h-full bg-primary" style="width: 65%"></div>
+<div class="h-full bg-tertiary" style="width: 20%"></div>
+<div class="h-full bg-error" style="width: 15%"></div>
+</div>
+</div>
+<!-- Module 4 -->
+<div class="space-y-2">
+<div class="flex justify-between items-center px-1">
+<span class="text-xs font-bold text-on-surface">Mobile Push API</span>
+<span class="text-[10px] font-bold text-outline">94% PASS</span>
+</div>
+<div class="h-3 w-full bg-surface-container-low rounded-full overflow-hidden flex">
+<div class="h-full bg-primary" style="width: 94%"></div>
+<div class="h-full bg-tertiary" style="width: 4%"></div>
+<div class="h-full bg-error" style="width: 2%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Analysis Notes -->
+<div class="mt-12 p-8 bg-surface-container-lowest rounded-full border border-outline-variant/10">
+<div class="flex items-start gap-6">
+<div class="p-3 bg-secondary/10 rounded-xl">
+<span class="material-symbols-outlined text-secondary" data-icon="lightbulb">lightbulb</span>
+</div>
+<div>
+<h5 class="text-sm font-bold text-on-surface mb-2">Automated Insights &amp; Recommendations</h5>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<p class="text-xs text-on-surface-variant leading-relaxed">
+<strong class="text-on-surface font-semibold">Velocity Increase:</strong> Automation ROI has surged by 18% following the implementation of the new CI/CD runners. Recommended to transition manual sanity suites to automated scripts to further decrease execution time by an estimated 12 hours/week.
+                            </p>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+<strong class="text-on-surface font-semibold">Defect Density Alert:</strong> The <span class="text-error font-bold">Data Visualization</span> module is exhibiting a defect density 3x higher than the system average. Engineering review suggested for code complexity and unit test coverage in the D3.js implementation layer.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

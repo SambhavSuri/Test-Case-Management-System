@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body { 
+    @apply bg-background text-on-surface;
+    font-family: 'Inter', sans-serif; 
+  }
+}
+
+@layer utilities {
+  .font-headline { font-family: 'Manrope', sans-serif; }
+  .glass-header { backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.7); }
+  .gradient-primary {
+      background: linear-gradient(135deg, #005FB8 0%, #0078D4 100%);
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
