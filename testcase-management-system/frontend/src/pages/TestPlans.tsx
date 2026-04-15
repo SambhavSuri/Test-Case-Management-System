@@ -23,9 +23,26 @@ interface TestCase {
   planId?: string;
 }
 
+interface RunResult {
+  testCaseId: string;
+  status: string;
+}
+
+interface TestRun {
+  id: string;
+  name: string;
+  status: string;
+  assignedTo: string;
+  projectId: string;
+  planId?: string;
+  createdAt: string;
+  results: RunResult[];
+}
+
 export default function TestPlans() {
   const [plans, setPlans] = useState<TestPlan[]>([]);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [runs, setRuns] = useState<TestRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
 
@@ -35,19 +52,26 @@ export default function TestPlans() {
 
   // Detail view state
   const [selectedPlan, setSelectedPlan] = useState<TestPlan | null>(null);
+  const [planDetailTab, setPlanDetailTab] = useState<"cases" | "runs">("cases");
 
   // Edit plan modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editPlan, setEditPlan] = useState<TestPlan | null>(null);
 
+  // Run drill-down inside plan detail
+  const [selectedRunInPlan, setSelectedRunInPlan] = useState<TestRun | null>(null);
+  const [runStatusFilter, setRunStatusFilter] = useState<string>("All");
+
   const fetchData = async () => {
     try {
-      const [plansRes, tcRes] = await Promise.all([
+      const [plansRes, tcRes, runsRes] = await Promise.all([
         fetch("http://localhost:3001/api/testplans"),
-        fetch("http://localhost:3001/api/testcases")
+        fetch("http://localhost:3001/api/testcases"),
+        fetch("http://localhost:3001/api/testruns")
       ]);
       if (plansRes.ok) setPlans(await plansRes.json());
       if (tcRes.ok) setTestCases(await tcRes.json());
+      if (runsRes.ok) setRuns(await runsRes.json());
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -172,7 +196,7 @@ export default function TestPlans() {
           {/* Back button + header */}
           <div className="flex justify-between items-start">
             <div className="space-y-3">
-              <button onClick={() => setSelectedPlan(null)} className="flex items-center gap-2 text-primary text-sm font-bold hover:underline transition-all">
+              <button onClick={() => { setSelectedPlan(null); setSelectedRunInPlan(null); setRunStatusFilter("All"); }} className="flex items-center gap-2 text-primary text-sm font-bold hover:underline transition-all">
                 <span className="material-symbols-outlined text-lg">arrow_back</span>
                 Back to All Plans
               </button>
@@ -197,32 +221,143 @@ export default function TestPlans() {
             </div>
           </div>
 
-          {/* Detail KPI cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
-              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Total Cases</p>
-              <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1">{progress.total}</p>
-            </div>
-            <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
-              <p className="text-[10px] font-bold text-secondary uppercase tracking-widest">Passed</p>
-              <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1 text-secondary">{progress.passed}</p>
-            </div>
-            <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
-              <p className="text-[10px] font-bold text-error uppercase tracking-widest">Failed</p>
-              <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1 text-error">{progress.failed}</p>
-            </div>
-            <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Blocked</p>
-              <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1 text-slate-500">{progress.blocked}</p>
-            </div>
-            <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
-              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Execution</p>
-              <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1">{progress.percent}%</p>
-              <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden mt-2">
-                <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${progress.percent}%` }}></div>
+          {/* Dynamic KPI cards — switch based on tab */}
+          {(() => {
+            const planRuns = runs.filter(r => r.planId === selectedPlan.id);
+
+            if (planDetailTab === "runs" && selectedRunInPlan) {
+              // Show selected run's KPI
+              const run = selectedRunInPlan;
+              const total = run.results.length;
+              const passed = run.results.filter(r => r.status === "Passed").length;
+              const failed = run.results.filter(r => r.status === "Failed").length;
+              const blocked = run.results.filter(r => r.status === "Blocked").length;
+              const retest = run.results.filter(r => r.status === "Retest").length;
+              const skipped = run.results.filter(r => r.status === "Skipped").length;
+              const untested = run.results.filter(r => r.status === "Untested").length;
+              const completed = total - untested;
+              const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+              return (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => { setSelectedRunInPlan(null); setRunStatusFilter("All"); }} className="flex items-center gap-1 text-primary text-xs font-bold hover:underline">
+                      <span className="material-symbols-outlined text-[16px]">arrow_back</span> All Runs
+                    </button>
+                    <span className="text-outline-variant">|</span>
+                    <h4 className="text-sm font-bold text-on-surface">{run.name}</h4>
+                    <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest ${run.status === "Completed" ? "text-secondary" : "text-primary"}`}>
+                      <span className={`w-2 h-2 rounded-full ${run.status === "Completed" ? "bg-secondary" : "bg-primary animate-pulse"}`}></span>
+                      {run.status}
+                    </span>
+                    <span className="text-[10px] text-on-surface-variant flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">person</span>{run.assignedTo || "Unassigned"}</span>
+                    <span className="text-[10px] text-on-surface-variant flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">calendar_today</span>{run.createdAt}</span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
+                    <div className="bg-surface p-4 rounded-2xl border border-outline-variant/50 shadow-sm text-center">
+                      <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Total</p>
+                      <p className="text-2xl font-extrabold font-headline mt-1">{total}</p>
+                    </div>
+                    <div className="bg-surface p-4 rounded-2xl border border-outline-variant/50 shadow-sm text-center">
+                      <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Completed</p>
+                      <p className="text-2xl font-extrabold font-headline mt-1">{percent}%</p>
+                    </div>
+                    <div className="bg-surface p-4 rounded-2xl border border-secondary/30 shadow-sm text-center">
+                      <p className="text-[9px] font-bold text-secondary uppercase tracking-widest">Passed</p>
+                      <p className="text-2xl font-extrabold font-headline text-secondary mt-1">{passed}</p>
+                    </div>
+                    <div className="bg-surface p-4 rounded-2xl border border-error/30 shadow-sm text-center">
+                      <p className="text-[9px] font-bold text-error uppercase tracking-widest">Failed</p>
+                      <p className="text-2xl font-extrabold font-headline text-error mt-1">{failed}</p>
+                    </div>
+                    <div className="bg-surface p-4 rounded-2xl border border-tertiary/30 shadow-sm text-center">
+                      <p className="text-[9px] font-bold text-tertiary uppercase tracking-widest">Blocked</p>
+                      <p className="text-2xl font-extrabold font-headline text-tertiary mt-1">{blocked}</p>
+                    </div>
+                    <div className="bg-surface p-4 rounded-2xl border border-primary/30 shadow-sm text-center">
+                      <p className="text-[9px] font-bold text-primary uppercase tracking-widest">Retest</p>
+                      <p className="text-2xl font-extrabold font-headline text-primary mt-1">{retest}</p>
+                    </div>
+                    <div className="bg-surface p-4 rounded-2xl border border-outline-variant/50 shadow-sm text-center">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Skipped</p>
+                      <p className="text-2xl font-extrabold font-headline text-slate-400 mt-1">{skipped}</p>
+                    </div>
+                    <div className="bg-surface p-4 rounded-2xl border border-outline-variant/50 shadow-sm text-center">
+                      <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Untested</p>
+                      <p className="text-2xl font-extrabold font-headline text-on-surface-variant mt-1">{untested}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            if (planDetailTab === "runs") {
+              // Aggregate KPI across all runs for this plan
+              const allResults = planRuns.flatMap(r => r.results);
+              const total = allResults.length;
+              const passed = allResults.filter(r => r.status === "Passed").length;
+              const failed = allResults.filter(r => r.status === "Failed").length;
+              const blocked = allResults.filter(r => r.status === "Blocked").length;
+              const untested = allResults.filter(r => r.status === "Untested").length;
+              const completed = total - untested;
+              const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Total Runs</p>
+                    <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1">{planRuns.length}</p>
+                  </div>
+                  <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
+                    <p className="text-[10px] font-bold text-secondary uppercase tracking-widest">Passed</p>
+                    <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1 text-secondary">{passed}</p>
+                  </div>
+                  <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
+                    <p className="text-[10px] font-bold text-error uppercase tracking-widest">Failed</p>
+                    <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1 text-error">{failed}</p>
+                  </div>
+                  <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Blocked</p>
+                    <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1 text-slate-500">{blocked}</p>
+                  </div>
+                  <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Execution</p>
+                    <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1">{percent}%</p>
+                    <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden mt-2">
+                      <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${percent}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            // Default: cases tab KPI
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
+                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Total Cases</p>
+                  <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1">{progress.total}</p>
+                </div>
+                <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
+                  <p className="text-[10px] font-bold text-secondary uppercase tracking-widest">Passed</p>
+                  <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1 text-secondary">{progress.passed}</p>
+                </div>
+                <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
+                  <p className="text-[10px] font-bold text-error uppercase tracking-widest">Failed</p>
+                  <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1 text-error">{progress.failed}</p>
+                </div>
+                <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Blocked</p>
+                  <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1 text-slate-500">{progress.blocked}</p>
+                </div>
+                <div className="bg-surface p-5 rounded-2xl border border-outline-variant/50 shadow-sm">
+                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Execution</p>
+                  <p className="text-3xl font-extrabold font-headline tracking-tighter mt-1">{progress.percent}%</p>
+                  <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden mt-2">
+                    <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${progress.percent}%` }}></div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Plan metadata */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -243,60 +378,241 @@ export default function TestPlans() {
             </div>
           </div>
 
-          {/* Test Cases Table */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-on-surface">Assigned Test Cases ({planCases.length})</h3>
-            </div>
-            <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface-container border-b border-outline-variant">
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">ID</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Title</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Priority</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Type</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Status</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Last Run</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/30">
-                  {planCases.map(tc => (
-                    <tr key={tc.id} className="hover:bg-primary/5 transition-colors">
-                      <td className="px-6 py-4 text-xs font-bold text-primary font-mono">{tc.id.substring(0, 10)}</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-on-surface">{tc.title}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${tc.priority === "High" ? "bg-error text-white shadow-sm shadow-error/20" : tc.priority === "Med" ? "bg-tertiary/10 text-tertiary" : "bg-slate-100 text-slate-500"}`}>
-                          {tc.priority}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-on-surface-variant">
-                          <span className="material-symbols-outlined text-[16px] text-secondary">{tc.type === "Automated" ? "precision_manufacturing" : "person"}</span>
-                          {tc.type}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${getStatusBg(tc.status)}`}>{tc.status}</span>
-                      </td>
-                      <td className="px-6 py-4 text-xs text-on-surface-variant font-medium">{tc.lastRun}</td>
-                    </tr>
-                  ))}
-                  {planCases.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="text-center py-16">
-                        <div className="flex flex-col items-center">
-                          <span className="material-symbols-outlined text-5xl text-outline-variant mb-3">playlist_add</span>
-                          <p className="text-on-surface-variant font-bold text-lg mb-1">No Test Cases Assigned</p>
-                          <p className="text-sm text-on-surface-variant/70">Assign test cases to this plan from the Test Case Repository.</p>
-                        </div>
-                      </td>
-                    </tr>
+          {/* ═══ Tabs: Assigned Test Cases | Assigned Test Runs ═══ */}
+          {(() => {
+            const planRuns = runs.filter(r => r.planId === selectedPlan.id);
+            return (
+              <>
+              <div className="flex items-center gap-8 border-b border-outline-variant/20">
+                <button
+                  onClick={() => { setPlanDetailTab("cases"); setSelectedRunInPlan(null); setRunStatusFilter("All"); }}
+                  className={`pb-3 text-sm font-bold transition-all flex items-center gap-2 ${planDetailTab === "cases" ? "text-primary border-b-2 border-primary" : "text-on-surface-variant hover:text-on-surface"}`}
+                >
+                  Assigned Test Cases
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${planDetailTab === "cases" ? "bg-primary text-white" : "bg-surface-container text-on-surface-variant"}`}>{planCases.length}</span>
+                </button>
+                <button
+                  onClick={() => setPlanDetailTab("runs")}
+                  className={`pb-3 text-sm font-bold transition-all flex items-center gap-2 ${planDetailTab === "runs" ? "text-primary border-b-2 border-primary" : "text-on-surface-variant hover:text-on-surface"}`}
+                >
+                  Assigned Test Runs
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${planDetailTab === "runs" ? "bg-primary text-white" : "bg-surface-container text-on-surface-variant"}`}>{planRuns.length}</span>
+                </button>
+              </div>
+
+              {/* ─── Cases Tab ─── */}
+              {planDetailTab === "cases" && (
+                <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-surface-container border-b border-outline-variant">
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">ID</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Title</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Priority</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Type</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Status</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Last Run</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/30">
+                      {planCases.map(tc => (
+                        <tr key={tc.id} className="hover:bg-primary/5 transition-colors">
+                          <td className="px-6 py-4 text-xs font-bold text-primary font-mono">{tc.id.substring(0, 10)}</td>
+                          <td className="px-6 py-4 text-sm font-semibold text-on-surface">{tc.title}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${tc.priority === "High" || tc.priority === "Critical" ? "bg-error text-white shadow-sm shadow-error/20" : tc.priority === "Medium" ? "bg-tertiary/10 text-tertiary" : "bg-slate-100 text-slate-500"}`}>
+                              {tc.priority}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-1.5 text-xs font-medium text-on-surface-variant">
+                              <span className="material-symbols-outlined text-[16px] text-secondary">{tc.type === "Automated" ? "precision_manufacturing" : "person"}</span>
+                              {tc.type}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2.5 py-1 rounded text-[10px] font-extrabold uppercase border ${getStatusBg(tc.status)}`}>{tc.status}</span>
+                          </td>
+                          <td className="px-6 py-4 text-xs text-on-surface-variant font-medium">{tc.lastRun}</td>
+                        </tr>
+                      ))}
+                      {planCases.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="text-center py-16">
+                            <div className="flex flex-col items-center">
+                              <span className="material-symbols-outlined text-5xl text-outline-variant mb-3">playlist_add</span>
+                              <p className="text-on-surface-variant font-bold text-lg mb-1">No Test Cases Assigned</p>
+                              <p className="text-sm text-on-surface-variant/70">Assign test cases to this plan from the Test Case Repository.</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* ─── Runs Tab ─── */}
+              {planDetailTab === "runs" && !selectedRunInPlan && (
+                <>
+                  {planRuns.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {planRuns.map(run => {
+                        const total = run.results.length;
+                        const passed = run.results.filter(r => r.status === "Passed").length;
+                        const failed = run.results.filter(r => r.status === "Failed").length;
+                        const blocked = run.results.filter(r => r.status === "Blocked").length;
+                        const untested = run.results.filter(r => r.status === "Untested").length;
+                        const completed = total - untested;
+                        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+                        return (
+                          <div
+                            key={run.id}
+                            onClick={() => { setSelectedRunInPlan(run); setRunStatusFilter("All"); }}
+                            className="bg-surface border border-outline-variant rounded-xl shadow-sm p-5 hover:shadow-md hover:border-primary/40 transition-all cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${run.status === "Completed" ? "bg-secondary" : "bg-primary animate-pulse"}`}></span>
+                                <span className={`text-[10px] font-bold uppercase tracking-widest ${run.status === "Completed" ? "text-secondary" : "text-primary"}`}>{run.status}</span>
+                              </div>
+                              <span className="text-[10px] font-mono text-on-surface-variant">{run.id.substring(0, 10).toUpperCase()}</span>
+                            </div>
+                            <h4 className="text-sm font-bold text-on-surface mb-1">{run.name}</h4>
+                            <div className="flex items-center gap-3 text-[11px] text-on-surface-variant mb-3">
+                              <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">person</span>{run.assignedTo || "Unassigned"}</span>
+                              <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">calendar_today</span>{run.createdAt}</span>
+                            </div>
+                            <div className="h-2 w-full bg-surface-container rounded-full overflow-hidden mb-2 flex">
+                              {passed > 0 && <div className="bg-secondary h-full" style={{ width: `${(passed / total) * 100}%` }}></div>}
+                              {failed > 0 && <div className="bg-error h-full" style={{ width: `${(failed / total) * 100}%` }}></div>}
+                              {blocked > 0 && <div className="bg-tertiary h-full" style={{ width: `${(blocked / total) * 100}%` }}></div>}
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex gap-2 text-[10px] font-bold">
+                                {passed > 0 && <span className="text-secondary">{passed} Passed</span>}
+                                {failed > 0 && <span className="text-error">{failed} Failed</span>}
+                                {blocked > 0 && <span className="text-tertiary">{blocked} Blocked</span>}
+                                {untested > 0 && <span className="text-on-surface-variant">{untested} Untested</span>}
+                              </div>
+                              <span className="text-xs font-extrabold text-on-surface">{percent}%</span>
+                            </div>
+                            <p className="text-[10px] text-on-surface-variant mt-1">{total} test case{total !== 1 ? "s" : ""}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="bg-surface border border-outline-variant rounded-xl shadow-sm p-10 text-center">
+                      <span className="material-symbols-outlined text-5xl text-outline-variant mb-3">playlist_play</span>
+                      <p className="text-on-surface-variant font-bold text-lg mb-1">No Test Runs</p>
+                      <p className="text-sm text-on-surface-variant/70">Create a test run and assign this plan from the Test Runs page.</p>
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </>
+              )}
+
+              {/* ─── Runs Tab: Selected Run Drill-Down ─── */}
+              {planDetailTab === "runs" && selectedRunInPlan && (() => {
+                const run = selectedRunInPlan;
+                const filteredResults = runStatusFilter === "All"
+                  ? run.results
+                  : run.results.filter(r => r.status === runStatusFilter);
+
+                const statusColorMap: Record<string, string> = {
+                  Passed: "bg-secondary/10 text-secondary border-secondary/20",
+                  Failed: "bg-error/10 text-error border-error/20",
+                  Blocked: "bg-tertiary/10 text-tertiary border-tertiary/20",
+                  Retest: "bg-primary/10 text-primary border-primary/20",
+                  Skipped: "bg-slate-100 text-slate-400 border-slate-200",
+                  Untested: "bg-surface-container text-on-surface-variant border-outline-variant/30",
+                };
+                const dotMap: Record<string, string> = {
+                  Passed: "bg-secondary", Failed: "bg-error", Blocked: "bg-tertiary",
+                  Retest: "bg-primary", Skipped: "bg-slate-400", Untested: "bg-on-surface-variant/40",
+                };
+                const colorMap: Record<string, string> = {
+                  All: "bg-primary text-white", Passed: "bg-secondary text-white", Failed: "bg-error text-white",
+                  Blocked: "bg-tertiary text-white", Retest: "bg-primary text-white", Skipped: "bg-slate-400 text-white",
+                  Untested: "bg-on-surface-variant text-white",
+                };
+
+                return (
+                  <div className="space-y-4">
+                    {/* Filter tabs */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {["All", "Passed", "Failed", "Blocked", "Retest", "Skipped", "Untested"].map(status => {
+                        const count = status === "All" ? run.results.length : run.results.filter(r => r.status === status).length;
+                        const isActive = runStatusFilter === status;
+                        return (
+                          <button
+                            key={status}
+                            onClick={() => setRunStatusFilter(status)}
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                              isActive ? colorMap[status] : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+                            }`}
+                          >
+                            {status}
+                            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-extrabold ${isActive ? "bg-white/20" : "bg-surface-container-high"}`}>{count}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Table */}
+                    <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-surface-container border-b border-outline-variant">
+                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">ID</th>
+                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Title</th>
+                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Priority</th>
+                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Type</th>
+                            <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Run Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-outline-variant/30">
+                          {filteredResults.map(result => {
+                            const tc = testCases.find(t => t.id === result.testCaseId);
+                            if (!tc) return null;
+                            return (
+                              <tr key={result.testCaseId} className="hover:bg-primary/5 transition-colors">
+                                <td className="px-6 py-3 text-xs font-bold text-primary font-mono">{tc.id.substring(0, 10)}</td>
+                                <td className="px-6 py-3 text-sm font-semibold text-on-surface">{tc.title}</td>
+                                <td className="px-6 py-3">
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                    tc.priority === "Critical" || tc.priority === "High" ? "bg-error text-white" :
+                                    tc.priority === "Medium" ? "bg-tertiary/10 text-tertiary" : "bg-slate-100 text-slate-500"
+                                  }`}>{tc.priority}</span>
+                                </td>
+                                <td className="px-6 py-3 text-xs font-medium text-on-surface-variant">{tc.type}</td>
+                                <td className="px-6 py-3">
+                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase border ${statusColorMap[result.status] || statusColorMap["Untested"]}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${dotMap[result.status] || dotMap["Untested"]}`}></span>
+                                    {result.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {filteredResults.length === 0 && (
+                            <tr>
+                              <td colSpan={5} className="text-center py-12">
+                                <span className="material-symbols-outlined text-4xl text-outline-variant mb-2">filter_list_off</span>
+                                <p className="text-on-surface-variant font-bold">No test cases with status "{runStatusFilter}"</p>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
+              </>
+            );
+          })()}
         </div>
 
         {/* Edit Plan Modal */}

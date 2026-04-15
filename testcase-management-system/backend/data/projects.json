@@ -18,7 +18,14 @@
   },
   {
     "name": "Project Gamma",
-    "modules": [],
+    "modules": [
+      {
+        "name": "Manual Test Simulation",
+        "suites": [
+          "Suite Manual"
+        ]
+      }
+    ],
     "id": "id_1776162193855_k1bc5el"
   }
 ]

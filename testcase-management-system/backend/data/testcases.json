@@ -7098,5 +7098,32 @@
       "49.03s"
     ],
     "id": "id_1776162241566_hh4bpxi"
+  },
+  {
+    "title": "login authentication ",
+    "description": "Check login ",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "owner": "Sambhav",
+    "suite": "Suite Manual",
+    "steps": [
+      {
+        "step": "Go to JumpIQ page ",
+        "expected": "Page is loaded "
+      },
+      {
+        "step": "Enter the login credentials ",
+        "expected": "Able to type in the input lable "
+      },
+      {
+        "step": "Then click on Login",
+        "expected": "Able to Login "
+      }
+    ],
+    "lastRun": "Never",
+    "projectId": "id_1776162193855_k1bc5el",
+    "id": "id_1776237714500_dt9qgan"
   }
 ]

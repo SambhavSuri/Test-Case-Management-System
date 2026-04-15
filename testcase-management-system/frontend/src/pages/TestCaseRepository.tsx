@@ -102,6 +102,13 @@ export default function TestCaseRepository() {
   const [importNewSuiteName, setImportNewSuiteName] = useState("");
   const [importDestMode, setImportDestMode] = useState<"existing" | "new">("existing");
 
+  // AI Generate state
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiResults, setAiResults] = useState<any[] | null>(null);
+  const [aiSelected, setAiSelected] = useState<Set<number>>(new Set());
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiImportDone, setAiImportDone] = useState<{ success: number; total: number } | null>(null);
+
   // New Form State
   const [newTC, setNewTC] = useState({ ...DEFAULT_TC_FORM });
   const [tcSteps, setTcSteps] = useState<TestStep[]>([{ step: "", expected: "" }]);
@@ -404,6 +411,93 @@ export default function TestCaseRepository() {
     setImportNewModuleName("");
     setImportNewSuiteName("");
     setImportDestMode("existing");
+  };
+
+  // ── AI Generate functions ─────────────────────────────────
+  const resetAI = () => {
+    setSelectedFile(null);
+    setAiResults(null);
+    setAiSelected(new Set());
+    setAiError(null);
+    setAiGenerating(false);
+    setAiImportDone(null);
+  };
+
+  const handleAIGenerate = async () => {
+    if (!selectedFile) return;
+    setAiGenerating(true);
+    setAiError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      const res = await fetch("http://localhost:3001/api/ai/generate", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAiError(data.error || "Failed to generate test cases");
+        setAiGenerating(false);
+        return;
+      }
+      const tcs = data.testCases || [];
+      setAiResults(tcs);
+      // Select all by default
+      setAiSelected(new Set(tcs.map((_: any, i: number) => i)));
+    } catch (err: any) {
+      setAiError(err.message || "Network error");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  const toggleAiSelect = (idx: number) => {
+    const next = new Set(aiSelected);
+    if (next.has(idx)) next.delete(idx); else next.add(idx);
+    setAiSelected(next);
+  };
+
+  const toggleAiSelectAll = () => {
+    if (!aiResults) return;
+    if (aiSelected.size === aiResults.length) {
+      setAiSelected(new Set());
+    } else {
+      setAiSelected(new Set(aiResults.map((_, i) => i)));
+    }
+  };
+
+  const importAIResults = async () => {
+    if (!aiResults || aiSelected.size === 0) return;
+    if (!selectedSuite || !selectedProjectId) return;
+    setAiGenerating(true);
+    let success = 0;
+    for (const idx of Array.from(aiSelected)) {
+      const tc = aiResults[idx];
+      if (!tc) continue;
+      try {
+        await fetch("http://localhost:3001/api/testcases", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: tc.title || "Untitled",
+            description: tc.description || "",
+            preconditions: tc.preconditions || "",
+            steps: tc.steps || [],
+            priority: tc.priority || "Medium",
+            type: tc.type || "Functional",
+            status: "Active",
+            automationStatus: "Not Automated",
+            lastRun: "Never",
+            projectId: selectedProjectId,
+            suite: selectedSuite,
+          })
+        });
+        success++;
+      } catch (err) { console.error("Error importing AI TC:", err); }
+    }
+    setAiGenerating(false);
+    setAiImportDone({ success, total: aiSelected.size });
+    fetchData();
   };
 
   const toggleSelection = (id: string) => {
@@ -1585,45 +1679,151 @@ export default function TestCaseRepository() {
 
       {/* Generate with AI Modal */}
       {isAIModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-on-surface/50 backdrop-blur-sm px-4">
-          <div className="bg-surface w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden p-8 border border-primary/30 relative">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-on-surface/50 backdrop-blur-sm px-4 py-6">
+          <div className="bg-surface w-full max-w-[900px] max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden border border-primary/30 relative flex flex-col">
             <div className="absolute inset-0 bg-primary/5 pointer-events-none"></div>
-            <div className="flex justify-between items-start mb-6 relative z-10">
+
+            {/* Header */}
+            <div className="flex justify-between items-start px-8 py-5 border-b border-outline-variant/30 relative z-10 shrink-0">
               <div>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 rounded uppercase text-primary text-[10px] font-extrabold tracking-widest mb-3 border border-primary/20">
-                  <span className="material-symbols-outlined text-xs">auto_awesome</span> Powered By Sovereign AI
+                  <span className="material-symbols-outlined text-xs">auto_awesome</span> Powered By Gemini AI
                 </div>
                 <h3 className="text-xl font-bold font-headline text-on-surface">Generate from BRD</h3>
-                <p className="text-xs font-medium text-on-surface-variant mt-1">Upload requirement documents. AI will scan logic gaps and draft isolated test suites automatically.</p>
+                <p className="text-xs font-medium text-on-surface-variant mt-1">
+                  {aiImportDone ? "Import complete." : aiResults ? `${aiResults.length} test cases generated. Select which to keep.` : "Upload a requirements document to auto-generate test cases."}
+                </p>
               </div>
-              <span onClick={() => setIsAIModalOpen(false)} className="material-symbols-outlined cursor-pointer text-on-surface-variant hover:text-error bg-white rounded-full p-1 transition-colors border border-outline-variant shadow-sm">close</span>
+              <span onClick={() => { setIsAIModalOpen(false); resetAI(); }} className="material-symbols-outlined cursor-pointer text-on-surface-variant hover:text-error bg-white rounded-full p-1.5 transition-colors border border-outline-variant shadow-sm text-xl relative z-10">close</span>
             </div>
-            <div className="mt-4 border-2 border-dashed border-primary/30 rounded-xl p-10 flex flex-col items-center justify-center bg-white hover:bg-primary/5 transition-colors group relative cursor-pointer z-10">
-              <input
-                type="file"
-                accept=".pdf, .docx, .txt"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                onChange={(e) => setSelectedFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
-              />
-              <span className="material-symbols-outlined text-5xl text-primary drop-shadow mb-3 group-hover:scale-110 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>neurology</span>
-              <p className="text-sm font-bold text-on-surface text-center">Drop your BRD or Requirements file</p>
-              <p className="text-[11px] font-semibold text-on-surface-variant text-center mt-1">Supports PDF, DOCX, TXT</p>
-            </div>
-            {selectedFile && (
-              <div className="mt-4 p-3 bg-white border border-outline-variant rounded-lg flex items-center gap-3 relative z-10 shadow-sm">
-                <span className="material-symbols-outlined text-primary">description</span>
-                <div className="flex-1 overflow-hidden">
-                  <p className="text-xs font-bold text-on-surface truncate">{selectedFile.name}</p>
-                  <p className="text-[10px] text-on-surface-variant">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-8 py-6 relative z-10">
+              {/* Step 1: Upload */}
+              {!aiResults && !aiImportDone && !aiGenerating && (
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-primary/30 rounded-xl p-10 flex flex-col items-center justify-center bg-white hover:bg-primary/5 transition-colors group relative cursor-pointer">
+                    <input type="file" accept=".pdf,.docx,.txt" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => setSelectedFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)} />
+                    <span className="material-symbols-outlined text-5xl text-primary drop-shadow mb-3 group-hover:scale-110 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>neurology</span>
+                    <p className="text-sm font-bold text-on-surface text-center">Drop your BRD or Requirements file</p>
+                    <p className="text-[11px] font-semibold text-on-surface-variant text-center mt-1">Supports PDF, DOCX, TXT</p>
+                  </div>
+                  {selectedFile && (
+                    <div className="p-3 bg-white border border-outline-variant rounded-lg flex items-center gap-3 shadow-sm">
+                      <span className="material-symbols-outlined text-primary">description</span>
+                      <div className="flex-1 overflow-hidden">
+                        <p className="text-xs font-bold text-on-surface truncate">{selectedFile.name}</p>
+                        <p className="text-[10px] text-on-surface-variant">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                      </div>
+                      <span onClick={() => setSelectedFile(null)} className="material-symbols-outlined text-sm text-error cursor-pointer">delete</span>
+                    </div>
+                  )}
+                  {aiError && (
+                    <div className="p-3 bg-error/10 border border-error/20 rounded-lg flex items-start gap-2">
+                      <span className="material-symbols-outlined text-error text-[18px] mt-0.5">error</span>
+                      <p className="text-xs text-error font-medium">{aiError}</p>
+                    </div>
+                  )}
+                  {!selectedSuite && (
+                    <div className="p-3 bg-tertiary/10 border border-tertiary/20 rounded-lg flex items-start gap-2">
+                      <span className="material-symbols-outlined text-tertiary text-[18px] mt-0.5">warning</span>
+                      <p className="text-xs text-tertiary font-medium">Navigate to a suite first. Generated test cases will be saved to the selected suite.</p>
+                    </div>
+                  )}
                 </div>
-                <span onClick={() => setSelectedFile(null)} className="material-symbols-outlined text-sm text-error cursor-pointer">delete</span>
-              </div>
-            )}
-            <div className="mt-8 flex justify-end gap-3 relative z-10">
-              <button type="button" onClick={() => setIsAIModalOpen(false)} className="font-bold text-sm text-on-surface-variant hover:text-on-surface px-4 py-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-outline-variant">Cancel</button>
-              <button disabled={!selectedFile} onClick={() => setIsAIModalOpen(false)} className="gradient-primary text-white font-bold text-sm px-6 py-2 rounded-lg shadow-lg hover:brightness-110 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                <span className="material-symbols-outlined text-[16px]">auto_awesome</span> Scan & Generate
-              </button>
+              )}
+
+              {/* Generating spinner */}
+              {aiGenerating && !aiResults && (
+                <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
+                  </div>
+                  <h4 className="text-lg font-bold font-headline text-on-surface">Analyzing Document...</h4>
+                  <p className="text-sm text-on-surface-variant text-center max-w-md">Gemini is reading your BRD and generating comprehensive test cases. This may take 15-30 seconds.</p>
+                </div>
+              )}
+
+              {/* Step 2: Preview & Select */}
+              {aiResults && !aiImportDone && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input type="checkbox" checked={aiResults.length > 0 && aiSelected.size === aiResults.length} onChange={toggleAiSelectAll} className="rounded border border-outline-variant bg-surface text-primary w-4 h-4 cursor-pointer" />
+                      <span className="text-xs font-bold text-on-surface">Select All ({aiSelected.size}/{aiResults.length})</span>
+                    </label>
+                    {selectedSuite && (
+                      <span className="text-[10px] font-bold text-on-surface-variant flex items-center gap-1">
+                        <span className="material-symbols-outlined text-secondary text-[14px]">folder</span>
+                        Importing to: {selectedSuite}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {aiResults.map((tc, idx) => (
+                      <div key={idx} className={`bg-white border rounded-xl p-4 transition-all cursor-pointer ${aiSelected.has(idx) ? "border-primary/40 shadow-sm" : "border-outline-variant/30 opacity-60"}`} onClick={() => toggleAiSelect(idx)}>
+                        <div className="flex items-start gap-3">
+                          <input type="checkbox" checked={aiSelected.has(idx)} onChange={() => toggleAiSelect(idx)} onClick={e => e.stopPropagation()} className="rounded border border-outline-variant bg-surface text-primary w-4 h-4 cursor-pointer mt-1 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="text-sm font-bold text-on-surface">{tc.title || "Untitled"}</h4>
+                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${tc.priority === "Critical" || tc.priority === "High" ? "bg-error text-white" : tc.priority === "Medium" ? "bg-tertiary/10 text-tertiary" : "bg-slate-100 text-slate-500"}`}>{tc.priority || "Medium"}</span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-surface-container text-on-surface-variant">{tc.type || "Functional"}</span>
+                            </div>
+                            {tc.description && <p className="text-xs text-on-surface-variant mb-2 line-clamp-2">{tc.description}</p>}
+                            {tc.steps && tc.steps.length > 0 && (
+                              <div className="flex items-center gap-1 text-[10px] text-primary font-bold">
+                                <span className="material-symbols-outlined text-[12px]">checklist</span>
+                                {tc.steps.length} step{tc.steps.length !== 1 ? "s" : ""}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Done */}
+              {aiImportDone && (
+                <div className="flex flex-col items-center justify-center py-10 space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-secondary text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                  </div>
+                  <h4 className="text-xl font-bold font-headline text-on-surface">Test Cases Created</h4>
+                  <p className="text-sm text-on-surface-variant text-center">
+                    Successfully imported <span className="font-bold text-secondary">{aiImportDone.success}</span> out of <span className="font-bold">{aiImportDone.total}</span> AI-generated test cases into <span className="font-bold">{selectedSuite}</span>.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-3 px-8 py-4 border-t border-outline-variant/30 relative z-10 shrink-0 bg-surface">
+              {!aiResults && !aiImportDone && !aiGenerating && (
+                <>
+                  <button type="button" onClick={() => { setIsAIModalOpen(false); resetAI(); }} className="font-bold text-sm text-on-surface-variant hover:text-on-surface px-4 py-2 hover:bg-surface-container rounded-lg transition-colors">Cancel</button>
+                  <button disabled={!selectedFile || !selectedSuite} onClick={handleAIGenerate} className="gradient-primary text-white font-bold text-sm px-6 py-2 rounded-lg shadow-lg hover:brightness-110 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]">auto_awesome</span> Scan & Generate
+                  </button>
+                </>
+              )}
+              {aiResults && !aiImportDone && (
+                <>
+                  <button type="button" onClick={() => { setAiResults(null); setAiSelected(new Set()); }} className="font-bold text-sm text-on-surface-variant hover:text-on-surface px-4 py-2 hover:bg-surface-container rounded-lg transition-colors">Back</button>
+                  <button disabled={aiSelected.size === 0 || aiGenerating} onClick={importAIResults} className="gradient-primary text-white font-bold text-sm px-6 py-2 rounded-lg shadow-lg hover:brightness-110 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    {aiGenerating ? (
+                      <><span className="material-symbols-outlined text-[16px] animate-spin">sync</span> Importing...</>
+                    ) : (
+                      <><span className="material-symbols-outlined text-[16px]">download</span> Import {aiSelected.size} Test Case{aiSelected.size !== 1 ? "s" : ""}</>
+                    )}
+                  </button>
+                </>
+              )}
+              {aiImportDone && (
+                <button onClick={() => { setIsAIModalOpen(false); resetAI(); }} className="gradient-primary text-white font-bold text-sm px-6 py-2 rounded-lg shadow-lg hover:brightness-110 active:scale-95 transition">Done</button>
+              )}
             </div>
           </div>
         </div>

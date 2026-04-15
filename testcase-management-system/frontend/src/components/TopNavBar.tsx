@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface SearchResult {
   id: string;
@@ -88,10 +88,6 @@ export default function TopNavBar() {
     <header className="w-full sticky top-0 z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-sm dark:shadow-none flex items-center justify-between px-6 h-16">
       <div className="flex items-center gap-8">
         <div className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">JumpIQ TCMS</div>
-        <nav className="hidden md:flex gap-6 h-full items-center">
-          <Link to="/" className="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 pb-1 font-headline font-medium text-sm tracking-wide">Dashboard</Link>
-          <Link to="/projects" className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 font-headline font-medium text-sm tracking-wide transition-colors duration-200">Projects</Link>
-        </nav>
       </div>
       <div className="flex items-center gap-4">
         {/* Global Search */}

@@ -41,6 +41,7 @@ interface RunResult {
   testCaseId: string;
   status: string; // Passed | Failed | Blocked | Retest | Skipped | Untested
   comment?: string;
+  stepComments?: Record<string, string>;
 }
 
 interface TestRun {
@@ -76,9 +77,7 @@ export default function TestExecutionCycle() {
   const [newRun, setNewRun] = useState({ name: "", assignedTo: "", projectId: "", planId: "" });
   const [includeExistingResults, setIncludeExistingResults] = useState(false);
 
-  // Comment editing state
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-  const [commentDraft, setCommentDraft] = useState("");
+  // (Comment editing moved to step-level in slideout)
 
   // Test case detail slideout
   const [viewingTC, setViewingTC] = useState<TestCase | null>(null);
@@ -95,6 +94,13 @@ export default function TestExecutionCycle() {
 
   // Detail view tab
   const [detailTab, setDetailTab] = useState<"cases" | "escalated">("cases");
+
+  // Delete run confirmation
+  const [confirmDeleteRunId, setConfirmDeleteRunId] = useState<string | null>(null);
+
+  // Step comment editing in slideout
+  const [editingStepIdx, setEditingStepIdx] = useState<number | null>(null);
+  const [stepCommentDraft, setStepCommentDraft] = useState("");
 
   const fetchData = async () => {
     try {
@@ -193,14 +199,24 @@ export default function TestExecutionCycle() {
     } catch (error) { console.error("Error creating run:", error); }
   };
 
+  // Delete a run
+  const deleteRun = async (runId: string) => {
+    try {
+      await fetch(`http://localhost:3001/api/testruns/${runId}`, { method: "DELETE" });
+      setRuns(prev => prev.filter(r => r.id !== runId));
+      setConfirmDeleteRunId(null);
+    } catch (error) {
+      console.error("Error deleting run:", error);
+    }
+  };
+
   // Update a single test case result in a run
   const updateResultStatus = async (run: TestRun, testCaseId: string, newStatus: string) => {
     const updatedResults = run.results.map(r =>
       r.testCaseId === testCaseId ? { ...r, status: newStatus } : r
     );
-    const allDone = updatedResults.every(r => r.status !== "Untested");
     try {
-      const updated = { ...run, results: updatedResults, status: allDone ? "Completed" : run.status };
+      const updated = { ...run, results: updatedResults };
       await fetch(`http://localhost:3001/api/testruns/${run.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -211,11 +227,19 @@ export default function TestExecutionCycle() {
     } catch (error) { console.error("Error updating result:", error); }
   };
 
-  // Save comment for a test case in a run
-  const saveComment = async (run: TestRun, testCaseId: string, comment: string) => {
-    const updatedResults = run.results.map(r =>
-      r.testCaseId === testCaseId ? { ...r, comment: comment.trim() || undefined } : r
-    );
+  // Save a step-level comment for a test case in a run
+  const saveStepComment = async (run: TestRun, testCaseId: string, stepIndex: number, comment: string) => {
+    const updatedResults = run.results.map(r => {
+      if (r.testCaseId !== testCaseId) return r;
+      const existing = r.stepComments || {};
+      const updated = { ...existing };
+      if (comment.trim()) {
+        updated[String(stepIndex)] = comment.trim();
+      } else {
+        delete updated[String(stepIndex)];
+      }
+      return { ...r, stepComments: updated };
+    });
     try {
       const updated = { ...run, results: updatedResults };
       await fetch(`http://localhost:3001/api/testruns/${run.id}`, {
@@ -224,10 +248,27 @@ export default function TestExecutionCycle() {
         body: JSON.stringify(updated)
       });
       setSelectedRun(updated);
-      setEditingCommentId(null);
-      setCommentDraft("");
       fetchData();
-    } catch (error) { console.error("Error saving comment:", error); }
+    } catch (error) { console.error("Error saving step comment:", error); }
+  };
+
+  // Escalate a single test case from the slideout
+  const escalateSingleFromSlideout = async (run: TestRun, tc: TestCase) => {
+    const result = run.results.find(r => r.testCaseId === tc.id);
+    // Build description from step comments
+    const stepCommentsArr: string[] = [];
+    if (result?.stepComments) {
+      Object.entries(result.stepComments).forEach(([idx, comment]) => {
+        stepCommentsArr.push(`Step ${Number(idx) + 1}: ${comment}`);
+      });
+    }
+    const autoDesc = stepCommentsArr.length > 0
+      ? stepCommentsArr.join("\n")
+      : result?.comment || "";
+
+    setSelectedTcIds(new Set([tc.id]));
+    setEscalation({ assignedTo: "", severity: "High", description: autoDesc });
+    setIsEscalateOpen(true);
   };
 
   // Close run
@@ -269,13 +310,23 @@ export default function TestExecutionCycle() {
     const items = Array.from(selectedTcIds).map(tcId => {
       const tc = getTcById(tcId);
       const result = selectedRun.results.find(r => r.testCaseId === tcId);
+      // Build comment from step comments if available
+      const stepCommentsArr: string[] = [];
+      if (result?.stepComments) {
+        Object.entries(result.stepComments).forEach(([idx, c]) => {
+          stepCommentsArr.push(`Step ${Number(idx) + 1}: ${c}`);
+        });
+      }
+      const comment = stepCommentsArr.length > 0
+        ? stepCommentsArr.join("; ")
+        : result?.comment || "";
       return {
         testCaseId: tcId,
         title: tc?.title || tcId,
         suite: tc?.suite || "",
         originalStatus: tc?.status || "",
         runStatus: result?.status || "",
-        comment: result?.comment || "",
+        comment,
       };
     });
 
@@ -543,7 +594,6 @@ export default function TestExecutionCycle() {
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Title</th>
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Original</th>
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Run Status</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Comment</th>
                     {selectedRun.status !== "Completed" && (
                       <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant text-right">Actions</th>
                     )}
@@ -553,7 +603,7 @@ export default function TestExecutionCycle() {
                   {filteredResults.map(result => {
                     const tc = getTcById(result.testCaseId);
                     if (!tc) return null;
-                    const isEditingComment = editingCommentId === result.testCaseId;
+                    const hasStepComments = result.stepComments && Object.keys(result.stepComments).length > 0;
                     return (
                       <tr key={result.testCaseId} className={`hover:bg-primary/5 transition-colors group ${selectedTcIds.has(tc.id) ? "bg-primary/5" : ""}`}>
                         <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
@@ -566,8 +616,9 @@ export default function TestExecutionCycle() {
                         </td>
                         <td className="px-4 py-3 text-xs font-bold text-primary font-mono">{tc.id.substring(0, 10)}</td>
                         <td className="px-4 py-3 max-w-[200px]">
-                          <button onClick={() => setViewingTC(tc)} className="text-sm font-medium text-on-surface hover:text-primary hover:underline transition-colors text-left">
+                          <button onClick={() => { setViewingTC(tc); setEditingStepIdx(null); setStepCommentDraft(""); }} className="text-sm font-medium text-on-surface hover:text-primary hover:underline transition-colors text-left flex items-center gap-1.5">
                             {tc.title}
+                            {hasStepComments && <span className="material-symbols-outlined text-tertiary text-[14px]" title="Has step comments">comment</span>}
                           </button>
                         </td>
                         <td className="px-4 py-3">
@@ -582,29 +633,6 @@ export default function TestExecutionCycle() {
                             <span className={`w-2 h-2 rounded-full ${statusDots[result.status] || "bg-slate-300"}`}></span>
                             {result.status}
                           </span>
-                        </td>
-                        <td className="px-4 py-3 max-w-[220px]">
-                          {isEditingComment ? (
-                            <div className="flex items-center gap-1.5">
-                              <input
-                                autoFocus
-                                value={commentDraft}
-                                onChange={e => setCommentDraft(e.target.value)}
-                                onKeyDown={e => { if (e.key === "Enter") saveComment(selectedRun, result.testCaseId, commentDraft); if (e.key === "Escape") { setEditingCommentId(null); setCommentDraft(""); } }}
-                                className="flex-1 bg-surface border border-outline-variant px-2 py-1 rounded text-xs focus:ring-2 focus:ring-primary/40 focus:outline-none min-w-0"
-                                placeholder="Add a comment..."
-                              />
-                              <span onClick={() => saveComment(selectedRun, result.testCaseId, commentDraft)} className="material-symbols-outlined text-[14px] text-secondary cursor-pointer hover:scale-110 transition-transform">check</span>
-                              <span onClick={() => { setEditingCommentId(null); setCommentDraft(""); }} className="material-symbols-outlined text-[14px] text-on-surface-variant cursor-pointer hover:scale-110 transition-transform">close</span>
-                            </div>
-                          ) : (
-                            <div
-                              onClick={() => { if (selectedRun.status !== "Completed") { setEditingCommentId(result.testCaseId); setCommentDraft(result.comment || ""); } }}
-                              className={`text-xs cursor-pointer rounded px-2 py-1 transition-colors min-h-[28px] flex items-center ${result.comment ? "text-on-surface font-medium bg-surface-container-low" : "text-on-surface-variant/50 italic hover:bg-surface-container-low"}`}
-                            >
-                              {result.comment || (selectedRun.status !== "Completed" ? "Click to add..." : "—")}
-                            </div>
-                          )}
                         </td>
                         {selectedRun.status !== "Completed" && (
                           <td className="px-4 py-3 text-right">
@@ -911,7 +939,13 @@ export default function TestExecutionCycle() {
         })()}
 
         {/* Test Case Detail Slideout */}
-        {viewingTC && (
+        {viewingTC && (() => {
+          const slideoutResult = selectedRun.results.find(r => r.testCaseId === viewingTC.id);
+          const slideoutStepComments = slideoutResult?.stepComments || {};
+          const canAct = selectedRun.status !== "Completed";
+          const isFailed = slideoutResult?.status === "Failed" || slideoutResult?.status === "Blocked";
+
+          return (
           <div className="fixed inset-0 z-[100] flex justify-end" onClick={() => setViewingTC(null)}>
             <div className="absolute inset-0 bg-on-surface/30 backdrop-blur-[2px]"></div>
             <div className="relative w-full max-w-[560px] bg-surface h-full shadow-2xl border-l border-outline-variant/50 flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
@@ -934,47 +968,56 @@ export default function TestExecutionCycle() {
                     "bg-secondary/10 text-secondary"
                   }`}>{viewingTC.status}</span>
                 </div>
+
+                {/* Run Status & Action Buttons */}
+                {slideoutResult && (
+                  <div className="mt-4 p-3 bg-surface-container-low rounded-xl border border-outline-variant/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Run Status:</span>
+                        <span className={`flex items-center gap-1.5 text-xs font-bold ${
+                          slideoutResult.status === "Passed" ? "text-secondary" :
+                          slideoutResult.status === "Failed" ? "text-error" :
+                          slideoutResult.status === "Blocked" ? "text-tertiary" :
+                          slideoutResult.status === "Retest" ? "text-primary" :
+                          "text-on-surface-variant"
+                        }`}>
+                          <span className={`w-2 h-2 rounded-full ${
+                            slideoutResult.status === "Passed" ? "bg-secondary" :
+                            slideoutResult.status === "Failed" ? "bg-error" :
+                            slideoutResult.status === "Blocked" ? "bg-tertiary" :
+                            slideoutResult.status === "Retest" ? "bg-primary" :
+                            "bg-on-surface-variant/40"
+                          }`}></span>
+                          {slideoutResult.status}
+                        </span>
+                      </div>
+                      {canAct && (
+                        <div className="flex gap-1.5">
+                          <button onClick={() => updateResultStatus(selectedRun, viewingTC.id, "Passed")} className={`p-1.5 rounded transition-all ${slideoutResult.status === "Passed" ? "bg-secondary text-white" : "bg-secondary/10 text-secondary hover:bg-secondary hover:text-white"}`} title="Pass">
+                            <span className="material-symbols-outlined text-[14px]">check</span>
+                          </button>
+                          <button onClick={() => updateResultStatus(selectedRun, viewingTC.id, "Failed")} className={`p-1.5 rounded transition-all ${slideoutResult.status === "Failed" ? "bg-error text-white" : "bg-error/10 text-error hover:bg-error hover:text-white"}`} title="Fail">
+                            <span className="material-symbols-outlined text-[14px]">close</span>
+                          </button>
+                          <button onClick={() => updateResultStatus(selectedRun, viewingTC.id, "Blocked")} className={`p-1.5 rounded transition-all ${slideoutResult.status === "Blocked" ? "bg-tertiary text-white" : "bg-tertiary/10 text-tertiary hover:bg-tertiary hover:text-white"}`} title="Block">
+                            <span className="material-symbols-outlined text-[14px]">block</span>
+                          </button>
+                          <button onClick={() => updateResultStatus(selectedRun, viewingTC.id, "Retest")} className={`p-1.5 rounded transition-all ${slideoutResult.status === "Retest" ? "bg-primary text-white" : "bg-primary/10 text-primary hover:bg-primary hover:text-white"}`} title="Retest">
+                            <span className="material-symbols-outlined text-[14px]">replay</span>
+                          </button>
+                          <button onClick={() => updateResultStatus(selectedRun, viewingTC.id, "Skipped")} className={`p-1.5 rounded transition-all ${slideoutResult.status === "Skipped" ? "bg-slate-400 text-white" : "bg-slate-100 text-slate-400 hover:bg-slate-300 hover:text-white"}`} title="Skip">
+                            <span className="material-symbols-outlined text-[14px]">skip_next</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Body */}
               <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-                {/* Metadata */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Owner</p>
-                    <p className="text-sm font-semibold text-on-surface">{viewingTC.owner || "Unassigned"}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Suite</p>
-                    <p className="text-sm font-semibold text-on-surface flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-secondary text-[16px]">folder</span>
-                      {viewingTC.suite || "None"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Last Run</p>
-                    <p className="text-sm font-semibold text-on-surface">{viewingTC.lastRun || "Never"}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Automation</p>
-                    <p className="text-sm font-semibold text-on-surface">{viewingTC.automationStatus || "—"}</p>
-                  </div>
-                </div>
-
-                {/* Run-specific comment */}
-                {(() => {
-                  const runResult = selectedRun.results.find(r => r.testCaseId === viewingTC.id);
-                  if (!runResult) return null;
-                  return (
-                    <div>
-                      <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Run Comment</p>
-                      <div className={`rounded-lg p-3 border ${runResult.comment ? "bg-primary/5 border-primary/20" : "bg-surface-container-low border-outline-variant/30"}`}>
-                        <p className="text-sm text-on-surface">{runResult.comment || "No comment added for this run."}</p>
-                      </div>
-                    </div>
-                  );
-                })()}
-
                 {/* Description */}
                 {viewingTC.description && (
                   <div>
@@ -995,12 +1038,15 @@ export default function TestExecutionCycle() {
                   </div>
                 )}
 
-                {/* Steps */}
+                {/* Steps with per-step comments */}
                 {viewingTC.steps && viewingTC.steps.length > 0 && (
                   <div>
                     <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Steps & Expected Results</p>
-                    <div className="space-y-3">
-                      {viewingTC.steps.map((step, idx) => (
+                    <div className="space-y-4">
+                      {viewingTC.steps.map((step, idx) => {
+                        const existingComment = slideoutStepComments[String(idx)] || "";
+                        const isEditing = editingStepIdx === idx;
+                        return (
                         <div key={idx} className="flex gap-3">
                           <div className="shrink-0 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-[11px] font-extrabold text-primary mt-0.5">{idx + 1}</div>
                           <div className="flex-1 space-y-1.5">
@@ -1014,9 +1060,54 @@ export default function TestExecutionCycle() {
                                 <p className="text-sm text-on-surface leading-relaxed">{step.expected}</p>
                               </div>
                             )}
+                            {/* Step-level comment */}
+                            {isEditing ? (
+                              <div className="flex items-start gap-1.5 mt-1">
+                                <textarea
+                                  autoFocus
+                                  value={stepCommentDraft}
+                                  onChange={e => setStepCommentDraft(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                      e.preventDefault();
+                                      saveStepComment(selectedRun, viewingTC.id, idx, stepCommentDraft);
+                                      setEditingStepIdx(null);
+                                      setStepCommentDraft("");
+                                    }
+                                    if (e.key === "Escape") { setEditingStepIdx(null); setStepCommentDraft(""); }
+                                  }}
+                                  rows={2}
+                                  className="flex-1 bg-surface border border-error/30 px-3 py-2 rounded-lg text-xs focus:ring-2 focus:ring-error/30 focus:outline-none resize-none"
+                                  placeholder="Add a comment for this step (e.g. what went wrong)..."
+                                />
+                                <div className="flex flex-col gap-1 mt-0.5">
+                                  <span onClick={() => { saveStepComment(selectedRun, viewingTC.id, idx, stepCommentDraft); setEditingStepIdx(null); setStepCommentDraft(""); }} className="material-symbols-outlined text-[16px] text-secondary cursor-pointer hover:scale-110 transition-transform p-1 bg-secondary/10 rounded">check</span>
+                                  <span onClick={() => { setEditingStepIdx(null); setStepCommentDraft(""); }} className="material-symbols-outlined text-[16px] text-on-surface-variant cursor-pointer hover:scale-110 transition-transform p-1 bg-surface-container rounded">close</span>
+                                </div>
+                              </div>
+                            ) : existingComment ? (
+                              <div
+                                onClick={() => { if (canAct) { setEditingStepIdx(idx); setStepCommentDraft(existingComment); } }}
+                                className="bg-error/5 border border-error/20 rounded-lg p-3 cursor-pointer hover:bg-error/10 transition-colors mt-1"
+                              >
+                                <p className="text-[10px] font-bold text-error uppercase tracking-widest mb-1 flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[12px]">comment</span> Tester Comment
+                                </p>
+                                <p className="text-sm text-on-surface leading-relaxed">{existingComment}</p>
+                              </div>
+                            ) : canAct ? (
+                              <button
+                                onClick={() => { setEditingStepIdx(idx); setStepCommentDraft(""); }}
+                                className="flex items-center gap-1.5 text-[11px] text-on-surface-variant/50 hover:text-error font-medium mt-1 px-2 py-1 rounded hover:bg-error/5 transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[14px]">add_comment</span>
+                                Add comment
+                              </button>
+                            ) : null}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1030,9 +1121,23 @@ export default function TestExecutionCycle() {
                   </div>
                 )}
               </div>
+
+              {/* Footer — Escalate from slideout */}
+              {canAct && (
+                <div className="px-8 py-4 border-t border-outline-variant/30 shrink-0 bg-surface">
+                  <button
+                    onClick={() => escalateSingleFromSlideout(selectedRun, viewingTC)}
+                    className="w-full bg-error text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">flag</span>
+                    Escalate This Test Case
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        )}
+          );
+        })()}
       </div>
     );
   }
@@ -1113,10 +1218,17 @@ export default function TestExecutionCycle() {
                     {stats.blocked > 0 && <span className="bg-tertiary text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md min-w-[28px] text-center">{stats.blocked}</span>}
                     {stats.untested > 0 && <span className="bg-slate-300 text-slate-700 text-[10px] font-extrabold px-2 py-0.5 rounded-md min-w-[28px] text-center">{stats.untested}</span>}
                   </div>
-                  <div className="col-span-3 text-center">
-                    <span className="text-sm font-medium text-on-surface-variant">
+                  <div className="col-span-3 flex items-center justify-center gap-2">
+                    <span className="text-sm font-medium text-on-surface-variant group-hover:hidden">
                       {stats.failed > 0 ? `${stats.failed} failure${stats.failed > 1 ? "s" : ""}` : "—"}
                     </span>
+                    <button
+                      onClick={e => { e.stopPropagation(); setConfirmDeleteRunId(run.id); }}
+                      className="hidden group-hover:flex items-center gap-1 text-error text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-error/10 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                      Delete
+                    </button>
                   </div>
                 </div>
               );
@@ -1134,6 +1246,29 @@ export default function TestExecutionCycle() {
           </div>
         )}
       </div>
+
+      {/* ═══ Delete Run Confirmation ═══ */}
+      {confirmDeleteRunId && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-on-surface/50 backdrop-blur-sm px-4">
+          <div className="bg-surface w-full max-w-sm rounded-2xl shadow-2xl p-8 border border-outline-variant">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-error text-2xl">warning</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-on-surface mb-1">Delete Test Run</h3>
+                <p className="text-sm text-on-surface-variant">
+                  Are you sure you want to delete <span className="font-bold text-on-surface">{runs.find(r => r.id === confirmDeleteRunId)?.name}</span>? This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-3 w-full mt-2">
+                <button onClick={() => setConfirmDeleteRunId(null)} className="flex-1 font-bold text-sm text-on-surface-variant hover:text-on-surface px-4 py-2.5 hover:bg-surface-container rounded-lg transition-colors border border-outline-variant">Cancel</button>
+                <button onClick={() => deleteRun(confirmDeleteRunId)} className="flex-1 bg-error text-white font-bold text-sm px-4 py-2.5 rounded-lg hover:brightness-110 active:scale-95 transition">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══ Create Run Modal ═══ */}
       {isCreateOpen && (

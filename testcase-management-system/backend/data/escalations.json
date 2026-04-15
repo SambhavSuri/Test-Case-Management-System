@@ -42,5 +42,73 @@
       }
     ],
     "id": "id_1776165550170_yqouqsr"
+  },
+  {
+    "runId": "id_1776238681281_8d1hpw6",
+    "runName": "asd",
+    "assignedTo": "Aman",
+    "severity": "High",
+    "description": "Step 2: It is failing here",
+    "status": "Open",
+    "createdAt": "2026-04-15T07:38:35.462Z",
+    "items": [
+      {
+        "testCaseId": "id_1776237714500_dt9qgan",
+        "title": "login authentication ",
+        "suite": "Suite Manual",
+        "originalStatus": "Active",
+        "runStatus": "Failed",
+        "comment": "Step 2: It is failing here"
+      }
+    ],
+    "id": "id_1776238715474_7o1kffk"
+  },
+  {
+    "runId": "id_1776230785582_usqpdya",
+    "runName": "dsfdsdc",
+    "assignedTo": "Aman",
+    "severity": "High",
+    "description": "Step 4: Okay vierfied this this actually an issue",
+    "status": "Open",
+    "createdAt": "2026-04-15T08:03:28.105Z",
+    "items": [
+      {
+        "testCaseId": "id_1776162239132_ist9z9j",
+        "title": "test_tc02_invalid_username",
+        "suite": "Suite B",
+        "originalStatus": "PASSED",
+        "runStatus": "Passed",
+        "comment": "Step 4: Okay vierfied this this actually an issue"
+      }
+    ],
+    "id": "id_1776240208112_zpepvna"
+  },
+  {
+    "runId": "id_1776240599169_lp9y16y",
+    "runName": "efsdvf",
+    "assignedTo": "nyumyum",
+    "severity": "High",
+    "description": "yujmyjm",
+    "status": "Open",
+    "createdAt": "2026-04-15T08:10:50.141Z",
+    "items": [
+      {
+        "testCaseId": "id_1776162239122_9l7050l",
+        "title": "test_tc01_valid_login",
+        "suite": "Suite B",
+        "originalStatus": "PASSED",
+        "runStatus": "Failed",
+        "comment": "Step 3: jujyuyjyujy"
+      },
+      {
+        "testCaseId": "id_1776162239132_ist9z9j",
+        "title": "test_tc02_invalid_username",
+        "suite": "Suite B",
+        "originalStatus": "PASSED",
+        "runStatus": "Failed",
+        "comment": "Step 3: tyhtuyjy"
+      }
+    ],
+    "id": "id_1776240650152_lneanyl"
   }
 ]
