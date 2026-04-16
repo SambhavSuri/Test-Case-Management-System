@@ -110,5 +110,198 @@
       }
     ],
     "id": "id_1776240650152_lneanyl"
+  },
+  {
+    "runId": "id_1776248475820_xjrqot1",
+    "runName": "Escalation Testing ",
+    "assignedTo": "Aditya.Kumar@shorthills.ai",
+    "severity": "High",
+    "description": "Step 1: Page is not loading",
+    "status": "Open",
+    "createdAt": "2026-04-15T10:29:23.043Z",
+    "items": [
+      {
+        "testCaseId": "id_1776237714500_dt9qgan",
+        "title": "login authentication ",
+        "suite": "Suite Manual",
+        "originalStatus": "Active",
+        "runStatus": "Failed",
+        "comment": "Step 1: Page is not loading"
+      }
+    ],
+    "azureWorkItemId": null,
+    "azureWorkItemUrl": "",
+    "azureState": "",
+    "id": "id_1776248963046_tp53qt1"
+  },
+  {
+    "runId": "id_1776163382718_kb2kvd9",
+    "runName": "Test 1 ",
+    "assignedTo": "Aditya.Kumar@shorthills.ai",
+    "severity": "High",
+    "description": "Step 3: unable to sign in",
+    "status": "Closed",
+    "createdAt": "2026-04-15T10:31:57.140Z",
+    "items": [
+      {
+        "testCaseId": "id_1776162239179_zqya3p6",
+        "title": "test_tc06_password_empty",
+        "suite": "Suite B",
+        "originalStatus": "PASSED",
+        "runStatus": "Failed",
+        "comment": "Step 3: unable to sign in"
+      }
+    ],
+    "azureWorkItemId": 1066,
+    "azureWorkItemUrl": "https://dev.azure.com/Shorthills-Compliance/435d204e-3945-4a02-900a-a90e9112f213/_workitems/edit/1066",
+    "azureState": "To Do",
+    "id": "id_1776249117146_6xkz0p6"
+  },
+  {
+    "runId": "id_1776163382718_kb2kvd9",
+    "runName": "Test 1 ",
+    "assignedTo": "Aditya.Kumar@shorthills.ai",
+    "severity": "High",
+    "description": "Step 3: Verification not possible",
+    "status": "Closed",
+    "createdAt": "2026-04-15T10:37:11.251Z",
+    "items": [
+      {
+        "testCaseId": "id_1776162239459_2ugs3ot",
+        "title": "test_tc29_profile_account_info",
+        "suite": "Suite B",
+        "originalStatus": "PASSED",
+        "runStatus": "Failed",
+        "comment": "Step 3: Verification nort possible"
+      }
+    ],
+    "azureWorkItemId": 1067,
+    "azureWorkItemUrl": "https://dev.azure.com/Shorthills-Compliance/435d204e-3945-4a02-900a-a90e9112f213/_workitems/edit/1067",
+    "azureState": "To Do",
+    "id": "id_1776249431354_j0io17i"
+  },
+  {
+    "runId": "id_1776163829934_28u4tir",
+    "runName": "Test 2 ",
+    "assignedTo": "Aditya.Kumar@shorthills.ai",
+    "severity": "High",
+    "description": "These 5 cases failed",
+    "status": "Open",
+    "createdAt": "2026-04-15T10:53:37.995Z",
+    "items": [
+      {
+        "testCaseId": "id_1776162240685_sp29sy4",
+        "title": "test_tc141_map_section_exists",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": ""
+      },
+      {
+        "testCaseId": "id_1776162240691_lz1c6mb",
+        "title": "test_tc142_zoom_controls",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": ""
+      },
+      {
+        "testCaseId": "id_1776162240814_yzqnqn3",
+        "title": "test_tc158_default_time_range",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": ""
+      },
+      {
+        "testCaseId": "id_1776162240953_lu8pqp8",
+        "title": "test_tc174_leaderboard_headers",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": ""
+      },
+      {
+        "testCaseId": "id_1776162240979_z5eeno0",
+        "title": "test_tc177_view_more",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": ""
+      }
+    ],
+    "azureWorkItemId": 1068,
+    "azureWorkItemUrl": "https://dev.azure.com/Shorthills-Compliance/435d204e-3945-4a02-900a-a90e9112f213/_workitems/edit/1068",
+    "azureState": "To Do",
+    "id": "id_1776250418000_0y9w8la"
+  },
+  {
+    "runId": "id_1776163382718_kb2kvd9",
+    "runName": "Test 1 ",
+    "assignedTo": "Aditya.Kumar@shorthills.ai",
+    "severity": "High",
+    "description": "Step 2: Failed here",
+    "status": "Open",
+    "createdAt": "2026-04-15T10:58:31.190Z",
+    "items": [
+      {
+        "testCaseId": "id_1776162240691_lz1c6mb",
+        "title": "test_tc142_zoom_controls",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": "Step 2: Failed here"
+      }
+    ],
+    "azureWorkItemId": 1069,
+    "azureWorkItemUrl": "https://dev.azure.com/Shorthills-Compliance/435d204e-3945-4a02-900a-a90e9112f213/_workitems/edit/1069",
+    "azureState": "To Do",
+    "id": "id_1776250711199_lxcx1r0"
+  },
+  {
+    "runId": "id_1776252358559_4vxpl0c",
+    "runName": "Atul Test ",
+    "assignedTo": "Aditya.Kumar@shorthills.ai",
+    "severity": "Medium",
+    "description": "Step 2: The select Dealershio didnt open",
+    "status": "Open",
+    "createdAt": "2026-04-15T11:26:56.293Z",
+    "items": [
+      {
+        "testCaseId": "id_1776252318275_reo5nav",
+        "title": "test_tc116_select_dealership_modal",
+        "suite": "Atul Suite",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": "Step 2: The select Dealershio didnt open"
+      }
+    ],
+    "azureWorkItemId": 1070,
+    "azureWorkItemUrl": "https://dev.azure.com/Shorthills-Compliance/435d204e-3945-4a02-900a-a90e9112f213/_workitems/edit/1070",
+    "azureState": "To Do",
+    "id": "id_1776252416300_hzvlaj9"
+  },
+  {
+    "runId": "id_1776314102217_7530rr0",
+    "runName": "Sprint 9 Test run for Automated",
+    "assignedTo": "Aditya.Kumar@shorthills.ai",
+    "severity": "High",
+    "description": "Step 2: It didnt work",
+    "status": "Open",
+    "createdAt": "2026-04-16T04:36:36.251Z",
+    "items": [
+      {
+        "testCaseId": "id_1776313890054_uiu1713",
+        "title": "test_tc116_select_dealership_modal",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": "Step 2: It didnt work"
+      }
+    ],
+    "azureWorkItemId": 1073,
+    "azureWorkItemUrl": "https://dev.azure.com/Shorthills-Compliance/435d204e-3945-4a02-900a-a90e9112f213/_workitems/edit/1073",
+    "azureState": "To Do",
+    "id": "id_1776314196261_cl2wknr"
   }
 ]

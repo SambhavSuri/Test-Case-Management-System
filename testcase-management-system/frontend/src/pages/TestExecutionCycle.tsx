@@ -74,7 +74,7 @@ export default function TestExecutionCycle() {
 
   // Create run modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newRun, setNewRun] = useState({ name: "", assignedTo: "", projectId: "", planId: "" });
+  const [newRun, setNewRun] = useState({ name: "", assignedTo: "", projectId: "", planId: "", scope: "project" as "project" | "module" | "suite", moduleName: "", suiteName: "" });
   const [includeExistingResults, setIncludeExistingResults] = useState(false);
 
   // (Comment editing moved to step-level in slideout)
@@ -91,6 +91,21 @@ export default function TestExecutionCycle() {
 
   // Escalations data
   const [escalations, setEscalations] = useState<any[]>([]);
+
+  // Azure integration
+  const [azureUsers, setAzureUsers] = useState<{ id: string; displayName: string; uniqueName: string }[]>([]);
+  const [azureConnected, setAzureConnected] = useState(false);
+  const [creatingWorkItem, setCreatingWorkItem] = useState(false);
+
+  // Assignee search
+  const [assigneeSearch, setAssigneeSearch] = useState("");
+  const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
+
+  // Discussion panel for escalations
+  const [activeDiscussionEscId, setActiveDiscussionEscId] = useState<string | null>(null);
+  const [discussionComments, setDiscussionComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [loadingComments, setLoadingComments] = useState(false);
 
   // Detail view tab
   const [detailTab, setDetailTab] = useState<"cases" | "escalated">("cases");
@@ -124,6 +139,46 @@ export default function TestExecutionCycle() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  // Fetch Azure users on mount
+  useEffect(() => {
+    fetch("http://localhost:3001/api/azure/test-connection")
+      .then(r => r.json())
+      .then(data => { if (data.connected) setAzureConnected(true); })
+      .catch(() => {});
+    fetch("http://localhost:3001/api/azure/users")
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setAzureUsers(data); })
+      .catch(() => {});
+  }, []);
+
+  // Fetch discussion comments for an escalation
+  const fetchDiscussion = async (escId: string, workItemId: number) => {
+    setActiveDiscussionEscId(escId);
+    setLoadingComments(true);
+    setDiscussionComments([]);
+    try {
+      const r = await fetch(`http://localhost:3001/api/azure/workitem/${workItemId}/comments`);
+      if (r.ok) setDiscussionComments(await r.json());
+    } catch { }
+    setLoadingComments(false);
+  };
+
+  const postComment = async (workItemId: number) => {
+    if (!newComment.trim()) return;
+    try {
+      const r = await fetch(`http://localhost:3001/api/azure/workitem/${workItemId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: newComment.trim() }),
+      });
+      if (r.ok) {
+        const c = await r.json();
+        setDiscussionComments(prev => [...prev, c]);
+        setNewComment("");
+      }
+    } catch { }
+  };
 
   // ── Helpers ───────────────────────────────────────────────
   const getRunStats = (run: TestRun) => {
@@ -175,7 +230,15 @@ export default function TestExecutionCycle() {
     e.preventDefault();
     if (!newRun.name.trim() || !newRun.projectId) return;
 
-    const projectCases = testCases.filter(tc => tc.projectId === newRun.projectId);
+    let projectCases = testCases.filter(tc => tc.projectId === newRun.projectId);
+    if (newRun.scope === "module" && newRun.moduleName) {
+      const proj = projects.find(p => p.id === newRun.projectId);
+      const mod = proj?.modules.find(m => m.name === newRun.moduleName);
+      const suiteNames = mod?.suites || [];
+      projectCases = projectCases.filter(tc => tc.suite && suiteNames.includes(tc.suite));
+    } else if (newRun.scope === "suite" && newRun.suiteName) {
+      projectCases = projectCases.filter(tc => tc.suite === newRun.suiteName);
+    }
     const results: RunResult[] = projectCases.map(tc => ({
       testCaseId: tc.id,
       status: includeExistingResults ? mapTcStatusToRunStatus(tc.status) : "Untested"
@@ -193,7 +256,7 @@ export default function TestExecutionCycle() {
         })
       });
       setIsCreateOpen(false);
-      setNewRun({ name: "", assignedTo: "", projectId: "", planId: "" });
+      setNewRun({ name: "", assignedTo: "", projectId: "", planId: "", scope: "project", moduleName: "", suiteName: "" });
       setIncludeExistingResults(false);
       fetchData();
     } catch (error) { console.error("Error creating run:", error); }
@@ -266,8 +329,11 @@ export default function TestExecutionCycle() {
       ? stepCommentsArr.join("\n")
       : result?.comment || "";
 
+    setViewingTC(null);
     setSelectedTcIds(new Set([tc.id]));
     setEscalation({ assignedTo: "", severity: "High", description: autoDesc });
+    setAssigneeSearch("");
+    setAssigneeDropdownOpen(false);
     setIsEscalateOpen(true);
   };
 
@@ -301,6 +367,8 @@ export default function TestExecutionCycle() {
       setSelectedTcIds(new Set(failedIds));
     }
     setEscalation({ assignedTo: "", severity: "High", description: "" });
+    setAssigneeSearch("");
+    setAssigneeDropdownOpen(false);
     setIsEscalateOpen(true);
   };
 
@@ -330,6 +398,84 @@ export default function TestExecutionCycle() {
       };
     });
 
+    // Build HTML description for Azure work item with full steps
+    const htmlDesc = items.map(item => {
+      const tc = getTcById(item.testCaseId);
+      const result = selectedRun.results.find(r => r.testCaseId === item.testCaseId);
+      const stepComments = result?.stepComments || {};
+
+      let stepsHtml = "";
+      if (tc?.steps && tc.steps.length > 0) {
+        // Find the first failed step index (step with a comment)
+        const failedStepIdx = tc.steps.findIndex((_, idx) => !!stepComments[String(idx)]);
+
+        stepsHtml = `<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;margin:8px 0;">
+          <tr style="background:#f0f0f0;"><th>#</th><th>Step</th><th>Expected Result</th><th>Status</th></tr>`;
+        tc.steps.forEach((step, idx) => {
+          const comment = stepComments[String(idx)];
+          const hasError = !!comment;
+          const isAfterFail = failedStepIdx >= 0 && idx > failedStepIdx && !hasError;
+          const rowStyle = hasError ? 'background:#fef2f2;' : isAfterFail ? 'background:#f5f5f5;' : '';
+          let statusCell = "";
+          if (hasError) {
+            statusCell = `<span style="color:#dc2626;font-weight:bold;">❌ FAILED</span><br/><span style="color:#dc2626;font-size:11px;">${comment}</span>`;
+          } else if (isAfterFail) {
+            statusCell = `<span style="color:#9ca3af;">— Not Executed</span>`;
+          } else {
+            statusCell = `<span style="color:#16a34a;">✔ Passed</span>`;
+          }
+          stepsHtml += `<tr style="${rowStyle}">
+            <td style="text-align:center;font-weight:bold;">${idx + 1}</td>
+            <td>${step.step || "—"}</td>
+            <td>${step.expected || "—"}</td>
+            <td style="text-align:center;">${statusCell}</td>
+          </tr>`;
+        });
+        stepsHtml += `</table>`;
+      }
+
+      return `<h3>${item.title}</h3>
+        <p><b>Test Case ID:</b> ${item.testCaseId}<br/>
+        <b>Original Status:</b> ${item.originalStatus} → <b>Run Status:</b> ${item.runStatus}</p>
+        ${tc?.description ? `<p><b>Description:</b> ${tc.description}</p>` : ""}
+        ${tc?.preconditions ? `<p><b>Preconditions:</b> ${tc.preconditions}</p>` : ""}
+        ${stepsHtml}
+        ${item.comment ? `<p><b>Tester Summary:</b> ${item.comment}</p>` : ""}
+        <hr/>`;
+    }).join("");
+    const fullDesc = `<h2>Escalation from TCMS — ${selectedRun.name}</h2>
+      ${escalation.description.trim() ? `<p><b>Notes:</b> ${escalation.description.trim()}</p>` : ""}
+      <p><b>Severity:</b> ${escalation.severity} | <b>Test Cases:</b> ${items.length}</p>
+      <hr/>${htmlDesc}`;
+
+    // Create Azure work item if connected
+    let azureWorkItemId: number | null = null;
+    let azureWorkItemUrl = "";
+    let azureState = "";
+    if (azureConnected) {
+      setCreatingWorkItem(true);
+      try {
+        const azRes = await fetch("http://localhost:3001/api/azure/create-workitem", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: `[TCMS] ${items.length} failed case${items.length > 1 ? "s" : ""} - ${selectedRun.name}`,
+            description: fullDesc,
+            severity: escalation.severity,
+            assignedTo: escalation.assignedTo.trim(),
+            tags: `TCMS;Escalation;${selectedRun.name}`,
+          })
+        });
+        if (azRes.ok) {
+          const azData = await azRes.json();
+          azureWorkItemId = azData.id;
+          azureWorkItemUrl = azData.url;
+          azureState = azData.state || "New";
+        }
+      } catch (error) { console.error("Azure work item creation failed:", error); }
+      setCreatingWorkItem(false);
+    }
+
     const payload = {
       runId: selectedRun.id,
       runName: selectedRun.name,
@@ -339,6 +485,9 @@ export default function TestExecutionCycle() {
       status: "Open",
       createdAt: new Date().toISOString(),
       items,
+      azureWorkItemId,
+      azureWorkItemUrl,
+      azureState,
     };
 
     try {
@@ -746,9 +895,24 @@ export default function TestExecutionCycle() {
                               </select>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4 mt-3 text-xs text-on-surface-variant">
+                          <div className="flex items-center gap-4 mt-3 text-xs text-on-surface-variant flex-wrap">
                             <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">person</span> Assigned to <span className="font-bold text-on-surface">{esc.assignedTo}</span></span>
                             <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">bug_report</span> <span className="font-bold text-on-surface">{esc.items?.length || 0}</span> test case(s)</span>
+                            {esc.azureWorkItemId && (
+                              <a href={esc.azureWorkItemUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary font-bold hover:underline">
+                                <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                                Azure #{esc.azureWorkItemId}
+                              </a>
+                            )}
+                            {esc.azureState && (
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                                esc.azureState === "New" ? "bg-primary/10 text-primary" :
+                                esc.azureState === "Active" ? "bg-tertiary/10 text-tertiary" :
+                                esc.azureState === "Resolved" ? "bg-secondary/10 text-secondary" :
+                                esc.azureState === "Closed" ? "bg-surface-container text-on-surface-variant" :
+                                "bg-surface-container text-on-surface-variant"
+                              }`}>Azure: {esc.azureState}</span>
+                            )}
                           </div>
                           {esc.description && (
                             <p className="mt-2 text-xs text-on-surface-variant bg-surface-container-low rounded-lg px-3 py-2 border border-outline-variant/20">{esc.description}</p>
@@ -791,6 +955,63 @@ export default function TestExecutionCycle() {
                             ))}
                           </tbody>
                         </table>
+
+                        {/* Discussion Section */}
+                        {esc.azureWorkItemId && (
+                          <div className="border-t border-outline-variant/20">
+                            <button
+                              onClick={() => {
+                                if (activeDiscussionEscId === esc.id) { setActiveDiscussionEscId(null); }
+                                else { fetchDiscussion(esc.id, esc.azureWorkItemId); }
+                              }}
+                              className="w-full px-6 py-3 flex items-center justify-between text-xs font-bold text-on-surface-variant hover:bg-primary/5 transition-colors"
+                            >
+                              <span className="flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[16px]">forum</span>
+                                Discussion
+                              </span>
+                              <span className="material-symbols-outlined text-[16px]">{activeDiscussionEscId === esc.id ? "expand_less" : "expand_more"}</span>
+                            </button>
+                            {activeDiscussionEscId === esc.id && (
+                              <div className="px-6 pb-4 space-y-3">
+                                {loadingComments ? (
+                                  <p className="text-xs text-on-surface-variant text-center py-4">Loading comments...</p>
+                                ) : discussionComments.length === 0 ? (
+                                  <p className="text-xs text-on-surface-variant text-center py-4">No comments yet. Start the discussion below.</p>
+                                ) : (
+                                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                                    {discussionComments.map((c: any, ci: number) => (
+                                      <div key={ci} className={`rounded-lg p-3 ${c.source === "tcms" ? "bg-primary/5 border border-primary/20" : "bg-surface-container-low border border-outline-variant/30"}`}>
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className="text-[10px] font-bold text-on-surface">{c.createdBy}</span>
+                                          <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded ${c.source === "tcms" ? "bg-primary/10 text-primary" : "bg-tertiary/10 text-tertiary"}`}>{c.source === "tcms" ? "TCMS" : "Azure"}</span>
+                                          <span className="text-[10px] text-on-surface-variant">{new Date(c.createdDate).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                                        </div>
+                                        <div className="text-xs text-on-surface" dangerouslySetInnerHTML={{ __html: c.text }}></div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {/* Add comment */}
+                                <div className="flex items-start gap-2">
+                                  <textarea
+                                    value={newComment}
+                                    onChange={e => setNewComment(e.target.value)}
+                                    onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); postComment(esc.azureWorkItemId); } }}
+                                    rows={2}
+                                    className="flex-1 bg-surface border border-outline-variant px-3 py-2 rounded-lg text-xs focus:ring-2 focus:ring-primary/40 focus:outline-none resize-none"
+                                    placeholder="Add a comment (syncs to Azure Board)..."
+                                  />
+                                  <button
+                                    onClick={() => postComment(esc.azureWorkItemId)}
+                                    disabled={!newComment.trim()}
+                                    className="bg-primary text-white px-3 py-2 rounded-lg text-xs font-bold hover:brightness-110 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >Send</button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
@@ -832,14 +1053,90 @@ export default function TestExecutionCycle() {
                   {/* Ticket fields */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Assign To <span className="text-error">*</span></label>
-                      <input
-                        autoFocus
-                        value={escalation.assignedTo}
-                        onChange={e => setEscalation({ ...escalation, assignedTo: e.target.value })}
-                        className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none shadow-sm"
-                        placeholder="e.g. Developer Name"
-                      />
+                      <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+                        Assign To <span className="text-error">*</span>
+                        {azureConnected && <span className="text-primary ml-1 normal-case font-medium">(Azure Board)</span>}
+                      </label>
+                      {azureConnected && azureUsers.length > 0 ? (
+                        <div className="relative">
+                          {/* Selected user display OR search input */}
+                          {escalation.assignedTo && !assigneeDropdownOpen ? (
+                            <div
+                              onClick={() => { setAssigneeDropdownOpen(true); setAssigneeSearch(""); }}
+                              className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm cursor-pointer shadow-sm flex items-center justify-between hover:border-primary/40 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                                  {(azureUsers.find(u => u.uniqueName === escalation.assignedTo)?.displayName || "?")[0]}
+                                </div>
+                                <span className="font-medium">{azureUsers.find(u => u.uniqueName === escalation.assignedTo)?.displayName || escalation.assignedTo}</span>
+                              </div>
+                              <span className="material-symbols-outlined text-on-surface-variant text-[16px]">close</span>
+                            </div>
+                          ) : (
+                            <div className="relative">
+                              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[16px] pointer-events-none">search</span>
+                              <input
+                                autoFocus
+                                value={assigneeSearch}
+                                onChange={e => { setAssigneeSearch(e.target.value); setAssigneeDropdownOpen(true); }}
+                                onFocus={() => setAssigneeDropdownOpen(true)}
+                                className="w-full bg-surface-container-low border border-outline-variant pl-9 pr-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none shadow-sm"
+                                placeholder="Search people..."
+                              />
+                            </div>
+                          )}
+                          {/* Dropdown */}
+                          {assigneeDropdownOpen && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-outline-variant rounded-xl shadow-2xl z-50 max-h-[220px] overflow-y-auto">
+                              {azureUsers
+                                .filter(u => {
+                                  if (!assigneeSearch.trim()) return true;
+                                  const q = assigneeSearch.toLowerCase();
+                                  return u.displayName.toLowerCase().includes(q) || u.uniqueName.toLowerCase().includes(q);
+                                })
+                                .map(u => (
+                                  <div
+                                    key={u.id}
+                                    onClick={() => {
+                                      setEscalation({ ...escalation, assignedTo: u.uniqueName });
+                                      setAssigneeDropdownOpen(false);
+                                      setAssigneeSearch("");
+                                    }}
+                                    className={`px-4 py-2.5 flex items-center gap-3 cursor-pointer hover:bg-primary/5 transition-colors ${escalation.assignedTo === u.uniqueName ? "bg-primary/10" : ""}`}
+                                  >
+                                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-bold text-primary shrink-0">
+                                      {u.displayName[0]}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-semibold text-on-surface truncate">{u.displayName}</p>
+                                      <p className="text-[10px] text-on-surface-variant truncate">{u.uniqueName}</p>
+                                    </div>
+                                    {escalation.assignedTo === u.uniqueName && (
+                                      <span className="material-symbols-outlined text-primary text-[16px] ml-auto shrink-0">check</span>
+                                    )}
+                                  </div>
+                                ))
+                              }
+                              {azureUsers.filter(u => {
+                                if (!assigneeSearch.trim()) return true;
+                                const q = assigneeSearch.toLowerCase();
+                                return u.displayName.toLowerCase().includes(q) || u.uniqueName.toLowerCase().includes(q);
+                              }).length === 0 && (
+                                <div className="px-4 py-6 text-center text-xs text-on-surface-variant">No users match "{assigneeSearch}"</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <input
+                          autoFocus
+                          value={escalation.assignedTo}
+                          onChange={e => setEscalation({ ...escalation, assignedTo: e.target.value })}
+                          className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none shadow-sm"
+                          placeholder="e.g. Developer Name"
+                        />
+                      )}
                     </div>
                     <div>
                       <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Severity</label>
@@ -911,12 +1208,16 @@ export default function TestExecutionCycle() {
                     </div>
                   </div>
 
-                  {/* Azure integration note */}
-                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-start gap-3">
-                    <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">info</span>
+                  {/* Azure integration status */}
+                  <div className={`rounded-lg p-4 flex items-start gap-3 ${azureConnected ? "bg-secondary/5 border border-secondary/20" : "bg-surface-container-low border border-outline-variant/30"}`}>
+                    <span className={`material-symbols-outlined text-[18px] mt-0.5 ${azureConnected ? "text-secondary" : "text-on-surface-variant"}`}>{azureConnected ? "check_circle" : "info"}</span>
                     <div>
-                      <p className="text-xs font-bold text-on-surface">Azure Boards Integration</p>
-                      <p className="text-[10px] text-on-surface-variant mt-0.5">In a future release, this escalation will automatically create a work item in Azure Boards with the assigned person, test case details, and tester comments attached.</p>
+                      <p className="text-xs font-bold text-on-surface">{azureConnected ? "Azure Boards Connected" : "Azure Boards Not Connected"}</p>
+                      <p className="text-[10px] text-on-surface-variant mt-0.5">
+                        {azureConnected
+                          ? "A Bug work item will be created automatically on Azure Boards with all test case details, steps, and tester comments."
+                          : "Configure AZURE_ORG_URL, AZURE_PROJECT, and AZURE_PAT in backend .env to enable automatic work item creation."}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -926,11 +1227,14 @@ export default function TestExecutionCycle() {
                   <button onClick={() => setIsEscalateOpen(false)} className="font-bold text-sm text-on-surface-variant hover:text-on-surface px-4 py-2 hover:bg-surface-container rounded-lg transition-colors">Cancel</button>
                   <button
                     onClick={submitEscalation}
-                    disabled={!escalation.assignedTo.trim() || escalateItems.length === 0}
+                    disabled={!escalation.assignedTo.trim() || escalateItems.length === 0 || creatingWorkItem}
                     className="bg-error text-white font-bold text-sm px-6 py-2 rounded-lg shadow-md hover:brightness-110 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    <span className="material-symbols-outlined text-[16px]">flag</span>
-                    Escalate {escalateItems.length} Issue{escalateItems.length !== 1 ? "s" : ""}
+                    {creatingWorkItem ? (
+                      <><span className="animate-spin material-symbols-outlined text-[16px]">progress_activity</span> Creating on Azure...</>
+                    ) : (
+                      <><span className="material-symbols-outlined text-[16px]">flag</span> Escalate {escalateItems.length} Issue{escalateItems.length !== 1 ? "s" : ""}{azureConnected ? " → Azure" : ""}</>
+                    )}
                   </button>
                 </div>
               </div>
@@ -943,7 +1247,7 @@ export default function TestExecutionCycle() {
           const slideoutResult = selectedRun.results.find(r => r.testCaseId === viewingTC.id);
           const slideoutStepComments = slideoutResult?.stepComments || {};
           const canAct = selectedRun.status !== "Completed";
-          const isFailed = slideoutResult?.status === "Failed" || slideoutResult?.status === "Blocked";
+
 
           return (
           <div className="fixed inset-0 z-[100] flex justify-end" onClick={() => setViewingTC(null)}>
@@ -1289,14 +1593,99 @@ export default function TestExecutionCycle() {
               </div>
               <div>
                 <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Project <span className="text-error">*</span></label>
-                <select required value={newRun.projectId} onChange={e => setNewRun({ ...newRun, projectId: e.target.value })} className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:outline-none cursor-pointer shadow-sm">
+                <select required value={newRun.projectId} onChange={e => setNewRun({ ...newRun, projectId: e.target.value, moduleName: "", suiteName: "", scope: "project" })} className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:outline-none cursor-pointer shadow-sm">
                   <option value="">— Select Project —</option>
                   {projects.map(p => (
                     <option key={p.id} value={p.id}>{p.name} ({testCases.filter(tc => tc.projectId === p.id).length} cases)</option>
                   ))}
                 </select>
-                <p className="text-[10px] text-on-surface-variant mt-1 font-medium">All test cases from this project will be included in the run.</p>
               </div>
+
+              {/* Scope selection */}
+              {newRun.projectId && (() => {
+                const proj = projects.find(p => p.id === newRun.projectId);
+                const modules = proj?.modules || [];
+                const selectedModule = modules.find(m => m.name === newRun.moduleName);
+                const suites = selectedModule?.suites || [];
+
+                // Count test cases based on current scope
+                let scopedCases = testCases.filter(tc => tc.projectId === newRun.projectId);
+                if (newRun.scope === "module" && newRun.moduleName) {
+                  const modSuites = selectedModule?.suites || [];
+                  scopedCases = scopedCases.filter(tc => tc.suite && modSuites.includes(tc.suite));
+                } else if (newRun.scope === "suite" && newRun.suiteName) {
+                  scopedCases = scopedCases.filter(tc => tc.suite === newRun.suiteName);
+                }
+
+                return (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Run Scope</label>
+                      <div className="flex gap-2">
+                        {(["project", "module", "suite"] as const).map(s => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setNewRun({ ...newRun, scope: s, moduleName: s === "project" ? "" : newRun.moduleName, suiteName: s !== "suite" ? "" : newRun.suiteName })}
+                            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${newRun.scope === s ? "bg-primary text-white shadow-md" : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"}`}
+                          >
+                            {s === "project" ? "Entire Project" : s === "module" ? "Module" : "Suite"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Module dropdown */}
+                    {(newRun.scope === "module" || newRun.scope === "suite") && (
+                      <div>
+                        <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Module <span className="text-error">*</span></label>
+                        <select
+                          required
+                          value={newRun.moduleName}
+                          onChange={e => setNewRun({ ...newRun, moduleName: e.target.value, suiteName: "" })}
+                          className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:outline-none cursor-pointer shadow-sm"
+                        >
+                          <option value="">— Select Module —</option>
+                          {modules.map(m => {
+                            const modSuites = m.suites;
+                            const count = testCases.filter(tc => tc.projectId === newRun.projectId && tc.suite && modSuites.includes(tc.suite)).length;
+                            return <option key={m.name} value={m.name}>{m.name} ({count} cases)</option>;
+                          })}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Suite dropdown */}
+                    {newRun.scope === "suite" && newRun.moduleName && (
+                      <div>
+                        <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Suite <span className="text-error">*</span></label>
+                        <select
+                          required
+                          value={newRun.suiteName}
+                          onChange={e => setNewRun({ ...newRun, suiteName: e.target.value })}
+                          className="w-full bg-surface-container-low border border-outline-variant px-4 py-2.5 rounded-lg text-sm focus:outline-none cursor-pointer shadow-sm"
+                        >
+                          <option value="">— Select Suite —</option>
+                          {suites.map(s => {
+                            const count = testCases.filter(tc => tc.projectId === newRun.projectId && tc.suite === s).length;
+                            return <option key={s} value={s}>{s} ({count} cases)</option>;
+                          })}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Scope summary */}
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-2.5 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-[16px]">info</span>
+                      <p className="text-[11px] font-medium text-on-surface">
+                        <span className="font-bold">{scopedCases.length}</span> test case{scopedCases.length !== 1 ? "s" : ""} will be included in this run
+                        {newRun.scope === "module" && newRun.moduleName && <> from module <span className="font-bold">{newRun.moduleName}</span></>}
+                        {newRun.scope === "suite" && newRun.suiteName && <> from suite <span className="font-bold">{newRun.suiteName}</span></>}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Include existing results toggle */}
               {newRun.projectId && (

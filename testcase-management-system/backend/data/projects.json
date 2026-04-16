@@ -1,31 +1,26 @@
 [
   {
-    "id": "proj-1",
-    "name": "Project Alpha",
+    "name": "Manual Test Cases",
     "modules": [
       {
         "name": "Module A",
         "suites": [
-          "Suite B",
-          "Suite C"
-        ]
-      },
-      {
-        "name": "Module B",
-        "suites": []
-      }
-    ]
-  },
-  {
-    "name": "Project Gamma",
-    "modules": [
-      {
-        "name": "Manual Test Simulation",
-        "suites": [
-          "Suite Manual"
+          "Suite A"
         ]
       }
     ],
-    "id": "id_1776162193855_k1bc5el"
+    "id": "id_1776313504571_lgxoq0a"
+  },
+  {
+    "name": "Automated Test Cases ",
+    "modules": [
+      {
+        "name": "Module B",
+        "suites": [
+          "Suite B"
+        ]
+      }
+    ],
+    "id": "id_1776313515484_xl29y9a"
   }
 ]

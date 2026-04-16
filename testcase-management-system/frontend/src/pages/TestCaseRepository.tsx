@@ -676,15 +676,20 @@ export default function TestCaseRepository() {
 
   const deleteSuite = (e: React.MouseEvent, projId: string, modIndex: number, suiteName: string) => {
     e.stopPropagation();
+    const suiteCases = testCases.filter(tc => tc.projectId === projId && tc.suite === suiteName);
     setConfirmDialog({
       title: "Delete Suite",
-      message: `Are you sure you want to delete "${suiteName}"? Test cases in it will lose their suite assignment.`,
+      message: `Are you sure you want to delete "${suiteName}" and its ${suiteCases.length} test case${suiteCases.length !== 1 ? "s" : ""}?`,
       onConfirm: async () => {
         const proj = projects.find(p => p.id === projId);
         if (!proj) return;
         const updatedModules = [...proj.modules];
         updatedModules[modIndex] = { ...updatedModules[modIndex], suites: updatedModules[modIndex].suites.filter(s => s !== suiteName) };
         try {
+          // Delete all test cases in this suite
+          await Promise.all(suiteCases.map(tc =>
+            fetch(`http://localhost:3001/api/testcases/${tc.id}`, { method: "DELETE" })
+          ));
           await fetch(`http://localhost:3001/api/projects/${projId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -706,13 +711,20 @@ export default function TestCaseRepository() {
     e.stopPropagation();
     const proj = projects.find(p => p.id === projId);
     if (!proj) return;
-    const modName = proj.modules[modIndex]?.name || "this module";
+    const mod = proj.modules[modIndex];
+    const modName = mod?.name || "this module";
+    const modSuites = mod?.suites || [];
+    const modCases = testCases.filter(tc => tc.projectId === projId && tc.suite && modSuites.includes(tc.suite));
     setConfirmDialog({
       title: "Delete Module",
-      message: `Are you sure you want to delete "${modName}" and all its suites?`,
+      message: `Are you sure you want to delete "${modName}", its ${modSuites.length} suite${modSuites.length !== 1 ? "s" : ""}, and ${modCases.length} test case${modCases.length !== 1 ? "s" : ""}?`,
       onConfirm: async () => {
         const updatedModules = proj.modules.filter((_, idx) => idx !== modIndex);
         try {
+          // Delete all test cases in this module's suites
+          await Promise.all(modCases.map(tc =>
+            fetch(`http://localhost:3001/api/testcases/${tc.id}`, { method: "DELETE" })
+          ));
           await fetch(`http://localhost:3001/api/projects/${projId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -729,11 +741,16 @@ export default function TestCaseRepository() {
     e.stopPropagation();
     const proj = projects.find(p => p.id === id);
     const projName = proj?.name || "this project";
+    const projCases = testCases.filter(tc => tc.projectId === id);
     setConfirmDialog({
       title: "Delete Project",
-      message: `Are you sure you want to delete "${projName}" and all its modules and suites?`,
+      message: `Are you sure you want to delete "${projName}", all its modules, suites, and ${projCases.length} test case${projCases.length !== 1 ? "s" : ""}?`,
       onConfirm: async () => {
         try {
+          // Delete all test cases in this project
+          await Promise.all(projCases.map(tc =>
+            fetch(`http://localhost:3001/api/testcases/${tc.id}`, { method: "DELETE" })
+          ));
           await fetch(`http://localhost:3001/api/projects/${id}`, { method: "DELETE" });
           fetchData();
           if (selectedProjectId === id) {

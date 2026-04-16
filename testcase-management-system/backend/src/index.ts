@@ -17,6 +17,115 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 const upload = multer({ dest: path.join(__dirname, "..", "uploads") });
 
+// ── Azure DevOps Integration ─────────────────────────────
+const AZURE_ORG_URL = process.env.AZURE_ORG_URL || "";
+const AZURE_PROJECT = process.env.AZURE_PROJECT || "";
+const AZURE_PAT = process.env.AZURE_PAT || "";
+const azureAuth = Buffer.from(`:${AZURE_PAT}`).toString("base64");
+const azureHeaders = { "Content-Type": "application/json", "Authorization": `Basic ${azureAuth}` };
+const azurePatchHeaders = { "Content-Type": "application/json-patch+json", "Authorization": `Basic ${azureAuth}` };
+
+app.get("/api/azure/test-connection", async (_req, res) => {
+  if (!AZURE_ORG_URL || !AZURE_PAT) return res.status(500).json({ error: "Azure not configured in .env" });
+  try {
+    const r = await fetch(`${AZURE_ORG_URL}/_apis/projects?api-version=7.0`, { headers: azureHeaders });
+    if (!r.ok) return res.status(401).json({ error: "Invalid PAT or org URL", details: await r.text() });
+    const data = await r.json();
+    const project = data.value?.find((p: any) => p.name === AZURE_PROJECT);
+    res.json({ connected: true, org: AZURE_ORG_URL, project: project ? project.name : "Not found", projectId: project?.id });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/azure/users", async (_req, res) => {
+  if (!AZURE_ORG_URL || !AZURE_PAT) return res.status(500).json({ error: "Azure not configured" });
+  try {
+    const teamsRes = await fetch(`${AZURE_ORG_URL}/_apis/projects/${encodeURIComponent(AZURE_PROJECT)}/teams?api-version=7.0`, { headers: azureHeaders });
+    if (!teamsRes.ok) return res.status(500).json({ error: "Failed to fetch teams" });
+    const teamsData = await teamsRes.json();
+    const allMembers: any[] = [];
+    const seen = new Set<string>();
+    for (const team of teamsData.value || []) {
+      const membersRes = await fetch(`${AZURE_ORG_URL}/_apis/projects/${encodeURIComponent(AZURE_PROJECT)}/teams/${team.id}/members?api-version=7.0`, { headers: azureHeaders });
+      if (!membersRes.ok) continue;
+      const membersData = await membersRes.json();
+      for (const m of membersData.value || []) {
+        const identity = m.identity;
+        if (identity && !identity.isContainer && !seen.has(identity.uniqueName)) {
+          seen.add(identity.uniqueName);
+          allMembers.push({ id: identity.id, displayName: identity.displayName, uniqueName: identity.uniqueName, imageUrl: identity.imageUrl });
+        }
+      }
+    }
+    res.json(allMembers);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/azure/create-workitem", async (req, res) => {
+  if (!AZURE_ORG_URL || !AZURE_PAT) return res.status(500).json({ error: "Azure not configured" });
+  const { title, description, assignedTo, tags } = req.body;
+  const patchDoc = [
+    { op: "add", path: "/fields/System.Title", value: title },
+    { op: "add", path: "/fields/System.Description", value: description || "" },
+    { op: "add", path: "/fields/System.Tags", value: tags || "TCMS;Escalation" },
+  ];
+  if (assignedTo) patchDoc.push({ op: "add", path: "/fields/System.AssignedTo", value: assignedTo });
+  try {
+    const r = await fetch(`${AZURE_ORG_URL}/${encodeURIComponent(AZURE_PROJECT)}/_apis/wit/workitems/$Issue?api-version=7.0`, {
+      method: "POST", headers: azurePatchHeaders, body: JSON.stringify(patchDoc),
+    });
+    if (!r.ok) { const errText = await r.text(); console.error("Azure create work item error:", errText); return res.status(500).json({ error: "Failed to create work item", details: errText }); }
+    const wi = await r.json();
+    res.json({ id: wi.id, url: wi._links?.html?.href || `${AZURE_ORG_URL}/${encodeURIComponent(AZURE_PROJECT)}/_workitems/edit/${wi.id}`, state: wi.fields?.["System.State"] });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/azure/workitem/:id", async (req, res) => {
+  if (!AZURE_ORG_URL || !AZURE_PAT) return res.status(500).json({ error: "Azure not configured" });
+  try {
+    const r = await fetch(`${AZURE_ORG_URL}/${encodeURIComponent(AZURE_PROJECT)}/_apis/wit/workitems/${req.params.id}?api-version=7.0`, { headers: azureHeaders });
+    if (!r.ok) return res.status(404).json({ error: "Work item not found" });
+    const wi = await r.json();
+    res.json({ id: wi.id, state: wi.fields?.["System.State"], assignedTo: wi.fields?.["System.AssignedTo"]?.displayName || "", title: wi.fields?.["System.Title"], url: wi._links?.html?.href || `${AZURE_ORG_URL}/${encodeURIComponent(AZURE_PROJECT)}/_workitems/edit/${wi.id}` });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/azure/workitem/:id/comments", async (req, res) => {
+  if (!AZURE_ORG_URL || !AZURE_PAT) return res.status(500).json({ error: "Azure not configured" });
+  try {
+    const r = await fetch(`${AZURE_ORG_URL}/${encodeURIComponent(AZURE_PROJECT)}/_apis/wit/workitems/${req.params.id}/comments?api-version=7.0-preview.4`, { headers: azureHeaders });
+    if (!r.ok) return res.status(500).json({ error: "Failed to fetch comments" });
+    const data = await r.json();
+    const comments = (data.comments || []).map((c: any) => ({ id: c.id, text: c.text, createdBy: c.createdBy?.displayName || "Unknown", createdDate: c.createdDate, source: "azure" }));
+    res.json(comments);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/azure/workitem/:id/comments", async (req, res) => {
+  if (!AZURE_ORG_URL || !AZURE_PAT) return res.status(500).json({ error: "Azure not configured" });
+  const { text } = req.body;
+  if (!text?.trim()) return res.status(400).json({ error: "Comment text required" });
+  try {
+    const r = await fetch(`${AZURE_ORG_URL}/${encodeURIComponent(AZURE_PROJECT)}/_apis/wit/workitems/${req.params.id}/comments?api-version=7.0-preview.4`, {
+      method: "POST", headers: azureHeaders, body: JSON.stringify({ text: text.trim() }),
+    });
+    if (!r.ok) return res.status(500).json({ error: "Failed to add comment", details: await r.text() });
+    const c = await r.json();
+    res.json({ id: c.id, text: c.text, createdBy: c.createdBy?.displayName, createdDate: c.createdDate, source: "tcms" });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- Example generic routes for JSON local storage ---
 
 app.get("/api/:collection", async (req, res) => {
