@@ -40,6 +40,10 @@ export default function SideNavBar() {
           <span className="material-symbols-outlined" data-icon="analytics">analytics</span>
           <span className="font-['Inter'] font-medium text-sm">Reports</span>
         </Link>
+        <Link to="/automation" className={`rounded-lg flex items-center gap-3 px-4 py-3 transition-all duration-200 ${path === '/automation' ? 'bg-white text-primary shadow-sm border border-outline-variant/30 font-bold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 hover:translate-x-1'}`}>
+          <span className="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+          <span className="font-['Inter'] font-medium text-sm">Automation</span>
+        </Link>
       </nav>
       <div className="mt-auto flex flex-col gap-1 border-t border-slate-200/50 pt-4">
         <button className="text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg flex items-center gap-3 px-4 py-3 hover:translate-x-1 transition-transform duration-200">

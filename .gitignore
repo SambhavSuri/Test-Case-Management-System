@@ -1,0 +1,45 @@
+# ── OS Files ──────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ── IDE / Editor ──────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# ── TCMS (testcase-management-system) ─────────────────
+testcase-management-system/node_modules/
+testcase-management-system/frontend/node_modules/
+testcase-management-system/backend/node_modules/
+testcase-management-system/frontend/dist/
+testcase-management-system/backend/dist/
+testcase-management-system/backend/.env
+testcase-management-system/backend/uploads/*
+!testcase-management-system/backend/uploads/.gitkeep
+testcase-management-system/backend/data/*.json
+!testcase-management-system/backend/data/users.json
+testcase-management-system/**/*.tsbuildinfo
+testcase-management-system/**/coverage/
+
+# ── Automated UI Test Cases ───────────────────────────
+Automated_UI_Test_Cases/.env
+Automated_UI_Test_Cases/__pycache__/
+Automated_UI_Test_Cases/**/__pycache__/
+Automated_UI_Test_Cases/.pytest_cache/
+Automated_UI_Test_Cases/**/*.pyc
+Automated_UI_Test_Cases/reports/test_report_*.xlsx
+Automated_UI_Test_Cases/reports/snapshots/*.png
+Automated_UI_Test_Cases/reports/test_run*.log
+Automated_UI_Test_Cases/reports/results_final.json
+Automated_UI_Test_Cases/reports/_results_*.json
+
+# ── Logs ──────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

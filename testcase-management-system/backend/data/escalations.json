@@ -287,7 +287,7 @@
     "assignedTo": "Aditya.Kumar@shorthills.ai",
     "severity": "High",
     "description": "Step 2: It didnt work",
-    "status": "Open",
+    "status": "Done",
     "createdAt": "2026-04-16T04:36:36.251Z",
     "items": [
       {
@@ -301,7 +301,76 @@
     ],
     "azureWorkItemId": 1073,
     "azureWorkItemUrl": "https://dev.azure.com/Shorthills-Compliance/435d204e-3945-4a02-900a-a90e9112f213/_workitems/edit/1073",
-    "azureState": "To Do",
+    "azureState": "Done",
     "id": "id_1776314196261_cl2wknr"
+  },
+  {
+    "runId": "id_1776314102217_7530rr0",
+    "runName": "Sprint 9 Test run for Automated",
+    "assignedTo": "Aditya.Kumar@shorthills.ai",
+    "severity": "High",
+    "description": "Step 2: It didnt work",
+    "status": "To Do",
+    "createdAt": "2026-04-16T05:59:07.096Z",
+    "items": [
+      {
+        "testCaseId": "id_1776313890054_uiu1713",
+        "title": "test_tc116_select_dealership_modal",
+        "suite": "Suite B",
+        "originalStatus": "FAILED",
+        "runStatus": "Failed",
+        "comment": "Step 2: It didnt work"
+      }
+    ],
+    "azureWorkItemId": 1074,
+    "azureWorkItemUrl": "https://dev.azure.com/Shorthills-Compliance/435d204e-3945-4a02-900a-a90e9112f213/_workitems/edit/1074",
+    "azureState": "To Do",
+    "id": "id_1776319147102_ose7nkh"
+  },
+  {
+    "runId": "id_1776331501007_2cqmkyt",
+    "runName": "Automated Import — 2026-04-16",
+    "assignedTo": "utkal@shorthills.ai",
+    "severity": "High",
+    "description": "Step 1: Here is an error",
+    "status": "Done",
+    "createdAt": "2026-04-16T09:26:05.044Z",
+    "items": [
+      {
+        "testCaseId": "id_1776331499146_3u4mg1t",
+        "title": "test_tc116_select_dealership_modal",
+        "suite": "Suite AB",
+        "originalStatus": "Active",
+        "runStatus": "Failed",
+        "comment": "Step 1: Here is an error"
+      }
+    ],
+    "azureWorkItemId": 1076,
+    "azureWorkItemUrl": "https://dev.azure.com/Shorthills-Compliance/435d204e-3945-4a02-900a-a90e9112f213/_workitems/edit/1076",
+    "azureState": "Done",
+    "id": "id_1776331565046_vpc8n7m"
+  },
+  {
+    "runId": "id_1776339100885_1ni4yym",
+    "runName": "Automated Run — 2026-04-16",
+    "assignedTo": "utkal@shorthills.ai",
+    "severity": "High",
+    "description": "Step 2: this has issue",
+    "status": "To Do",
+    "createdAt": "2026-04-16T11:33:15.512Z",
+    "items": [
+      {
+        "testCaseId": "id_1776339100874_bdknstw",
+        "title": "test_tc182_recalibration_tab_visible",
+        "suite": "Recalibration Setup",
+        "originalStatus": "Active",
+        "runStatus": "Passed",
+        "comment": "Step 2: this has issue"
+      }
+    ],
+    "azureWorkItemId": 1080,
+    "azureWorkItemUrl": "https://dev.azure.com/Shorthills-Compliance/435d204e-3945-4a02-900a-a90e9112f213/_workitems/edit/1080",
+    "azureState": "To Do",
+    "id": "id_1776339195517_08v3iuw"
   }
 ]

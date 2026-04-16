@@ -3,6 +3,15 @@ import path from "path";
 
 const DATA_DIR = path.join(__dirname, "..", "..", "data");
 
+// Simple per-collection lock to prevent concurrent write corruption
+const locks = new Map<string, Promise<void>>();
+function withLock<T>(collection: string, fn: () => Promise<T>): Promise<T> {
+  const prev = locks.get(collection) || Promise.resolve();
+  const next = prev.then(fn, fn);
+  locks.set(collection, next.then(() => {}, () => {}));
+  return next;
+}
+
 async function ensureDataDir() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
@@ -40,26 +49,32 @@ export const findById = async (collection: string, id: string): Promise<any | un
 };
 
 export const insert = async (collection: string, item: any): Promise<any> => {
-  const data = await readCollection(collection);
-  const newItem = { ...item, id: item.id || `id_${Date.now()}_${Math.random().toString(36).substring(2, 9)}` };
-  data.push(newItem);
-  await writeCollection(collection, data);
-  return newItem;
+  return withLock(collection, async () => {
+    const data = await readCollection(collection);
+    const newItem = { ...item, id: item.id || `id_${Date.now()}_${Math.random().toString(36).substring(2, 9)}` };
+    data.push(newItem);
+    await writeCollection(collection, data);
+    return newItem;
+  });
 };
 
 export const update = async (collection: string, id: string, updates: any): Promise<any | null> => {
-  const data = await readCollection(collection);
-  const index = data.findIndex((item: any) => item.id === id);
-  if (index === -1) return null;
-  data[index] = { ...data[index], ...updates };
-  await writeCollection(collection, data);
-  return data[index];
+  return withLock(collection, async () => {
+    const data = await readCollection(collection);
+    const index = data.findIndex((item: any) => item.id === id);
+    if (index === -1) return null;
+    data[index] = { ...data[index], ...updates };
+    await writeCollection(collection, data);
+    return data[index];
+  });
 };
 
 export const remove = async (collection: string, id: string): Promise<boolean> => {
-  const data = await readCollection(collection);
-  const filtered = data.filter((item: any) => item.id !== id);
-  if (filtered.length === data.length) return false;
-  await writeCollection(collection, filtered);
-  return true;
+  return withLock(collection, async () => {
+    const data = await readCollection(collection);
+    const filtered = data.filter((item: any) => item.id !== id);
+    if (filtered.length === data.length) return false;
+    await writeCollection(collection, filtered);
+    return true;
+  });
 };

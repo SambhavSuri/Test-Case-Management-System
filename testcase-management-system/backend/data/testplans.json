@@ -1,22 +1,15 @@
 [
   {
-    "id": "plan-2",
-    "name": "Integration Gateway - v2.4.0",
-    "description": "End-to-end testing for the new API integration gateway module",
-    "status": "Completed",
-    "owner": "David Chen",
-    "startDate": "2026-03-15",
-    "endDate": "2026-04-10",
-    "createdAt": "2026-03-12"
-  },
-  {
-    "name": "Sprint 9 ",
-    "description": "Verifying ",
-    "owner": "Sam",
-    "startDate": "2026-04-10",
-    "endDate": "2026-04-19",
+    "name": "Sprint 1",
+    "description": "Synced from Azure DevOps: Shorthills IT Support\\Sprint 1",
     "status": "In Progress",
-    "createdAt": "2026-04-15",
-    "id": "id_1776239106353_57k0zkz"
+    "owner": "",
+    "startDate": "",
+    "endDate": "",
+    "createdAt": "2026-04-16",
+    "azureIterationId": "71324e0a-d689-4356-baa8-93e66bf79ec1",
+    "azureIterationPath": "Shorthills IT Support\\Sprint 1",
+    "assignments": [],
+    "id": "id_1776337579967_ca9bgsi"
   }
 ]

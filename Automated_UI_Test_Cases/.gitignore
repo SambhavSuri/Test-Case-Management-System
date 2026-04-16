@@ -1,0 +1,18 @@
+# Reports (generated)
+reports/test_report_*.xlsx
+reports/snapshots/*.png
+reports/test_run*.log
+reports/results_final.json
+reports/_results_*.json
+
+# Python
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+*.pyc
+
+# Environment
+.env
+
+# OS
+.DS_Store

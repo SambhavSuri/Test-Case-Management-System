@@ -15,21 +15,39 @@ interface ProjectData {
   name: string;
 }
 
+interface RunResult {
+  testCaseId: string;
+  status: string;
+}
+
+interface TestRun {
+  id: string;
+  name: string;
+  status: string;
+  runType?: string;
+  projectId: string;
+  createdAt: string;
+  results: RunResult[];
+}
+
 export default function Dashboard() {
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [projects, setProjects] = useState<ProjectData[]>([]);
+  const [runs, setRuns] = useState<TestRun[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>("All Projects");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [tcRes, projRes] = await Promise.all([
+        const [tcRes, projRes, runsRes] = await Promise.all([
           fetch("http://localhost:3001/api/testcases"),
-          fetch("http://localhost:3001/api/projects")
+          fetch("http://localhost:3001/api/projects"),
+          fetch("http://localhost:3001/api/testruns")
         ]);
         if (tcRes.ok) setTestCases(await tcRes.json());
         if (projRes.ok) setProjects(await projRes.json());
+        if (runsRes.ok) setRuns(await runsRes.json());
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -44,14 +62,25 @@ export default function Dashboard() {
       : testCases.filter(tc => tc.projectId === selectedProject);
 
   const totalTestCases = feedTestCases.length;
-  const autoTests = feedTestCases.filter(t => t.type === "Automated").length;
+  const autoTests = feedTestCases.filter(t => t.automationStatus === "Automated").length;
   const manualTests = totalTestCases - autoTests;
   const autoCoverage = totalTestCases === 0 ? 0 : Math.round((autoTests / totalTestCases) * 100 * 10) / 10;
-  
-  const passTests = feedTestCases.filter(t => t.status === "PASSED" || t.status === "READY").length; // Include READY as pass for visual demo
+
+  // Build latest result per test case from all runs
+  const latestResults = new Map<string, string>();
+  const feedTcIds = new Set(feedTestCases.map(t => t.id));
+  runs.forEach(run => {
+    run.results.forEach(r => {
+      if (r.status !== "Untested" && feedTcIds.has(r.testCaseId)) {
+        latestResults.set(r.testCaseId, r.status);
+      }
+    });
+  });
+
+  const passTests = [...latestResults.values()].filter(s => s === "Passed").length;
   const passRate = totalTestCases === 0 ? 0 : Math.round((passTests / totalTestCases) * 100 * 10) / 10;
-  
-  const activeDefects = feedTestCases.filter(t => t.status === "FAILED" || t.status === "BLOCKED").length;
+
+  const activeDefects = [...latestResults.values()].filter(s => s === "Failed" || s === "Blocked").length;
 
   return (
     <div className="flex-1 overflow-y-auto relative w-full h-full">

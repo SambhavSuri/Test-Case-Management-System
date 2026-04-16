@@ -1,26 +1,29 @@
 [
   {
-    "name": "Manual Test Cases",
+    "name": "Manual Directory",
     "modules": [
       {
         "name": "Module A",
         "suites": [
-          "Suite A"
-        ]
-      }
-    ],
-    "id": "id_1776313504571_lgxoq0a"
-  },
-  {
-    "name": "Automated Test Cases ",
-    "modules": [
-      {
-        "name": "Module B",
-        "suites": [
+          "Suite A",
           "Suite B"
         ]
       }
     ],
-    "id": "id_1776313515484_xl29y9a"
+    "id": "id_1776327592518_nf98tg2"
+  },
+  {
+    "name": "Automated Tests",
+    "modules": [
+      {
+        "name": "UI Tests",
+        "suites": [
+          "Select View",
+          "Single Dealership",
+          "Recalibration Setup"
+        ]
+      }
+    ],
+    "id": "id_1776337734765_kf51gjg"
   }
 ]

@@ -6,6 +6,7 @@ import TestExecutionCycle from "./pages/TestExecutionCycle";
 import TestPlans from "./pages/TestPlans";
 import QualityReports from "./pages/QualityReports";
 import TraceabilityMatrix from "./pages/TraceabilityMatrix";
+import AutomationRunner from "./pages/AutomationRunner";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="test-plans" element={<TestPlans />} />
           <Route path="requirements" element={<TraceabilityMatrix />} />
           <Route path="reports" element={<QualityReports />} />
+          <Route path="automation" element={<AutomationRunner />} />
         </Route>
       </Routes>
     </Router>

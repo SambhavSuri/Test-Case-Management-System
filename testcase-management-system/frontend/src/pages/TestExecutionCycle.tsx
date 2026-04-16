@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 
 interface TestPlan {
   id: string;
@@ -48,6 +49,7 @@ interface TestRun {
   id: string;
   name: string;
   status: string; // In Progress | Completed
+  runType: string; // Manual | Automated
   assignedTo: string;
   projectId: string;
   planId?: string;
@@ -75,7 +77,7 @@ export default function TestExecutionCycle() {
   // Create run modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newRun, setNewRun] = useState({ name: "", assignedTo: "", projectId: "", planId: "", scope: "project" as "project" | "module" | "suite", moduleName: "", suiteName: "" });
-  const [includeExistingResults, setIncludeExistingResults] = useState(false);
+  // (includeExistingResults removed — results only come from runs now)
 
   // (Comment editing moved to step-level in slideout)
 
@@ -138,7 +140,23 @@ export default function TestExecutionCycle() {
     }
   };
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   useEffect(() => { fetchData(); }, []);
+
+  // Deep-link: open a specific run and tab from URL params
+  useEffect(() => {
+    const runId = searchParams.get("runId");
+    const tab = searchParams.get("tab");
+    if (runId && runs.length > 0) {
+      const run = runs.find(r => r.id === runId);
+      if (run) {
+        setSelectedRun(run);
+        if (tab === "escalated") setDetailTab("escalated");
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [runs, searchParams]);
 
   // Fetch Azure users on mount
   useEffect(() => {
@@ -163,6 +181,36 @@ export default function TestExecutionCycle() {
     } catch { }
     setLoadingComments(false);
   };
+
+  // Sync Azure work item states when Escalated Cases tab is opened
+  useEffect(() => {
+    if (detailTab !== "escalated" || !selectedRun || !azureConnected) return;
+    const runEscs = escalations.filter((e: any) => e.runId === selectedRun.id && e.azureWorkItemId);
+    if (runEscs.length === 0) return;
+
+    let cancelled = false;
+    const sync = async () => {
+      let changed = false;
+      for (const esc of runEscs) {
+        try {
+          const r = await fetch(`http://localhost:3001/api/azure/workitem/${esc.azureWorkItemId}`);
+          if (!r.ok || cancelled) continue;
+          const wi = await r.json();
+          if (wi.state && wi.state !== esc.status) {
+            await fetch(`http://localhost:3001/api/escalations/${esc.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...esc, status: wi.state, azureState: wi.state })
+            });
+            changed = true;
+          }
+        } catch { }
+      }
+      if (changed && !cancelled) fetchData();
+    };
+    sync();
+    return () => { cancelled = true; };
+  }, [detailTab, selectedRun?.id, escalations.length]);
 
   const postComment = async (workItemId: number) => {
     if (!newComment.trim()) return;
@@ -215,16 +263,6 @@ export default function TestExecutionCycle() {
     });
   };
 
-  // Map test case status to run result status
-  const mapTcStatusToRunStatus = (tcStatus: string): string => {
-    const s = tcStatus.toUpperCase();
-    if (s === "PASSED") return "Passed";
-    if (s === "FAILED") return "Failed";
-    if (s === "BLOCKED") return "Blocked";
-    if (s === "SKIPPED") return "Skipped";
-    return "Untested";
-  };
-
   // Create run
   const submitCreateRun = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,7 +279,7 @@ export default function TestExecutionCycle() {
     }
     const results: RunResult[] = projectCases.map(tc => ({
       testCaseId: tc.id,
-      status: includeExistingResults ? mapTcStatusToRunStatus(tc.status) : "Untested"
+      status: "Untested"
     }));
 
     try {
@@ -251,13 +289,13 @@ export default function TestExecutionCycle() {
         body: JSON.stringify({
           ...newRun,
           status: "In Progress",
+          runType: "Manual",
           createdAt: new Date().toISOString().split("T")[0],
           results
         })
       });
       setIsCreateOpen(false);
       setNewRun({ name: "", assignedTo: "", projectId: "", planId: "", scope: "project", moduleName: "", suiteName: "" });
-      setIncludeExistingResults(false);
       fetchData();
     } catch (error) { console.error("Error creating run:", error); }
   };
@@ -482,7 +520,7 @@ export default function TestExecutionCycle() {
       assignedTo: escalation.assignedTo.trim(),
       severity: escalation.severity,
       description: escalation.description.trim(),
-      status: "Open",
+      status: "To Do",
       createdAt: new Date().toISOString(),
       items,
       azureWorkItemId,
@@ -834,24 +872,12 @@ export default function TestExecutionCycle() {
               };
 
               const escStatusColor: Record<string, string> = {
-                Open: "bg-error/10 text-error",
-                "In Progress": "bg-primary/10 text-primary",
-                Resolved: "bg-secondary/10 text-secondary",
-                Closed: "bg-surface-container text-on-surface-variant",
+                "To Do": "bg-error/10 text-error",
+                "Doing": "bg-primary/10 text-primary",
+                "Done": "bg-secondary/10 text-secondary",
               };
 
-              const updateEscStatus = async (escId: string, newStatus: string) => {
-                const esc = escalations.find((e: any) => e.id === escId);
-                if (!esc) return;
-                try {
-                  await fetch(`http://localhost:3001/api/escalations/${escId}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ...esc, status: newStatus })
-                  });
-                  fetchData();
-                } catch (error) { console.error("Error updating escalation:", error); }
-              };
+              // (Azure state sync handled by useEffect — status is read-only in UI)
 
               return (
                 <div className="flex-1 overflow-auto p-6 space-y-4">
@@ -883,16 +909,7 @@ export default function TestExecutionCycle() {
                             </div>
                             <div className="flex items-center gap-2">
                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${severityColor[esc.severity] || "bg-slate-100 text-slate-500"}`}>{esc.severity}</span>
-                              <select
-                                value={esc.status}
-                                onChange={e => updateEscStatus(esc.id, e.target.value)}
-                                className={`text-[10px] font-bold uppercase rounded px-2 py-1 border-none cursor-pointer outline-none ${escStatusColor[esc.status] || "bg-surface-container text-on-surface-variant"}`}
-                              >
-                                <option>Open</option>
-                                <option>In Progress</option>
-                                <option>Resolved</option>
-                                <option>Closed</option>
-                              </select>
+                              <span className={`text-[10px] font-bold uppercase rounded px-2 py-1 ${escStatusColor[esc.status] || "bg-surface-container text-on-surface-variant"}`}>{esc.status}</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-4 mt-3 text-xs text-on-surface-variant flex-wrap">
@@ -906,10 +923,9 @@ export default function TestExecutionCycle() {
                             )}
                             {esc.azureState && (
                               <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
-                                esc.azureState === "New" ? "bg-primary/10 text-primary" :
-                                esc.azureState === "Active" ? "bg-tertiary/10 text-tertiary" :
-                                esc.azureState === "Resolved" ? "bg-secondary/10 text-secondary" :
-                                esc.azureState === "Closed" ? "bg-surface-container text-on-surface-variant" :
+                                esc.azureState === "To Do" ? "bg-error/10 text-error" :
+                                esc.azureState === "Doing" ? "bg-primary/10 text-primary" :
+                                esc.azureState === "Done" ? "bg-secondary/10 text-secondary" :
                                 "bg-surface-container text-on-surface-variant"
                               }`}>Azure: {esc.azureState}</span>
                             )}
@@ -1507,8 +1523,9 @@ export default function TestExecutionCycle() {
                       <span className="absolute inset-0 flex items-center justify-center text-[9px] font-extrabold text-on-surface">{stats.percent}%</span>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">
-                        {run.name} <span className="text-primary font-mono text-xs">{run.id.toUpperCase()}</span>
+                      <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors flex items-center gap-2">
+                        {run.name}
+                        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${run.runType === "Automated" ? "bg-tertiary/10 text-tertiary" : "bg-primary/10 text-primary"}`}>{run.runType || "Manual"}</span>
                       </p>
                       <p className="text-[11px] text-on-surface-variant font-medium">Assigned to {run.assignedTo}</p>
                     </div>
@@ -1686,39 +1703,6 @@ export default function TestExecutionCycle() {
                   </div>
                 );
               })()}
-
-              {/* Include existing results toggle */}
-              {newRun.projectId && (
-                <div className="bg-surface-container-low rounded-lg p-4 border border-outline-variant/30 space-y-3">
-                  <label className="flex items-start gap-3 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={includeExistingResults}
-                      onChange={e => setIncludeExistingResults(e.target.checked)}
-                      className="rounded border border-outline-variant bg-surface text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer mt-0.5"
-                    />
-                    <div>
-                      <p className="text-sm font-bold text-on-surface">Include existing test case results</p>
-                      <p className="text-[10px] text-on-surface-variant mt-0.5">
-                        Carry over Passed/Failed/Blocked statuses from test cases. Useful for re-verification runs — filter by Failed to retest only the failures.
-                      </p>
-                    </div>
-                  </label>
-                  {includeExistingResults && (() => {
-                    const cases = testCases.filter(tc => tc.projectId === newRun.projectId);
-                    const passed = cases.filter(tc => tc.status.toUpperCase() === "PASSED").length;
-                    const failed = cases.filter(tc => tc.status.toUpperCase() === "FAILED").length;
-                    const other = cases.length - passed - failed;
-                    return (
-                      <div className="flex gap-3 text-[10px] font-bold pl-7">
-                        <span className="text-secondary">{passed} Passed</span>
-                        <span className="text-error">{failed} Failed</span>
-                        <span className="text-on-surface-variant">{other} Untested</span>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
 
               <div>
                 <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Test Plan (optional)</label>

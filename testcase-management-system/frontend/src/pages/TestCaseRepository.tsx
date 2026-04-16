@@ -101,6 +101,8 @@ export default function TestCaseRepository() {
   const [importNewModuleName, setImportNewModuleName] = useState("");
   const [importNewSuiteName, setImportNewSuiteName] = useState("");
   const [importDestMode, setImportDestMode] = useState<"existing" | "new">("existing");
+  const [importTestType, setImportTestType] = useState<"Manual" | "Automated">("Manual");
+  const [importPlanId, setImportPlanId] = useState<string>("");
 
   // AI Generate state
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -367,14 +369,16 @@ export default function TestCaseRepository() {
     }
 
     let success = 0;
+    const createdTestCaseIds: { id: string; csvStatus: string }[] = [];
+
     for (const row of importParsed) {
       try {
         const payload: any = {
           title: row.title,
           priority: "Medium",
           type: "Functional",
-          status: row.status,
-          automationStatus: "Automated",
+          status: "Active",
+          automationStatus: importTestType,
           lastRun: row.timestamp || "Never",
           projectId: targetProjectId,
           suite: targetSuite,
@@ -384,14 +388,52 @@ export default function TestCaseRepository() {
         if (row.actualResult) payload.description = (payload.description || "") + `\nActual: ${row.actualResult}`;
         if (row.duration) payload.tags = [`${row.duration}s`];
 
-        await fetch("http://localhost:3001/api/testcases", {
+        const res = await fetch("http://localhost:3001/api/testcases", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        success++;
+        if (res.ok) {
+          const created = await res.json();
+          createdTestCaseIds.push({ id: created.id, csvStatus: row.status || "Untested" });
+          success++;
+        }
       } catch (error) {
         console.error("Error importing row:", error);
+      }
+    }
+
+    // For Automated imports, create a TestRun with the CSV results
+    if (importTestType === "Automated" && createdTestCaseIds.length > 0) {
+      try {
+        const mapStatus = (s: string): string => {
+          const u = s.toUpperCase();
+          if (u === "PASSED" || u === "PASS") return "Passed";
+          if (u === "FAILED" || u === "FAIL") return "Failed";
+          if (u === "BLOCKED") return "Blocked";
+          if (u === "SKIPPED" || u === "SKIP") return "Skipped";
+          return "Untested";
+        };
+        const results = createdTestCaseIds.map(tc => ({
+          testCaseId: tc.id,
+          status: mapStatus(tc.csvStatus),
+        }));
+        await fetch("http://localhost:3001/api/testruns", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: `Automated Import — ${new Date().toISOString().split("T")[0]}`,
+            assignedTo: "Automation Script",
+            projectId: targetProjectId,
+            planId: importPlanId || undefined,
+            status: "In Progress",
+            runType: "Automated",
+            createdAt: new Date().toISOString().split("T")[0],
+            results,
+          })
+        });
+      } catch (error) {
+        console.error("Error creating automated run:", error);
       }
     }
 
@@ -411,6 +453,8 @@ export default function TestCaseRepository() {
     setImportNewModuleName("");
     setImportNewSuiteName("");
     setImportDestMode("existing");
+    setImportTestType("Manual");
+    setImportPlanId("");
   };
 
   // ── AI Generate functions ─────────────────────────────────
@@ -575,6 +619,8 @@ export default function TestCaseRepository() {
 
   const handleDeleteSelected = async () => {
     for (const id of Array.from(selectedIds)) {
+      const tc = testCases.find(t => t.id === id);
+      if ((tc as any)?.locked) continue; // Skip locked automation test cases
       await fetch(`http://localhost:3001/api/testcases/${id}`, { method: "DELETE" });
     }
     setSelectedIds(new Set());
@@ -822,8 +868,9 @@ export default function TestCaseRepository() {
     const matchPriority = filterPriority === "All" || tc.priority === filterPriority;
     const matchType = filterType === "All" || tc.type === filterType;
     const matchStatus = filterStatus === "All" || tc.status === filterStatus;
+    const matchProject = selectedProjectId ? tc.projectId === selectedProjectId : true;
     const matchSuite = selectedSuitesFilter ? (tc.suite && selectedSuitesFilter.includes(tc.suite)) : true;
-    return matchPriority && matchType && matchStatus && matchSuite;
+    return matchPriority && matchType && matchStatus && matchProject && matchSuite;
   });
 
   const activeFiltersCount = [filterPriority, filterType, filterStatus].filter(f => f !== "All").length;
@@ -1090,7 +1137,7 @@ export default function TestCaseRepository() {
                     <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Title</th>
                     <ColumnFilter column="Priority" value={filterPriority} setValue={setFilterPriority} options={["All", "Critical", "High", "Medium", "Low"]} />
                     <ColumnFilter column="Type" value={filterType} setValue={setFilterType} options={["All", "Functional", "Regression", "Smoke", "Integration", "Performance", "Security", "Other"]} />
-                    <ColumnFilter column="Status" value={filterStatus} setValue={setFilterStatus} options={["All", "Active", "Draft", "PASSED", "FAILED", "BLOCKED", "SKIPPED", "DRAFT"]} />
+                    <ColumnFilter column="Status" value={filterStatus} setValue={setFilterStatus} options={["All", "Active", "Draft", "Deprecated"]} />
                     <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Owner</th>
                     <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Last Run</th>
                   </tr>
@@ -1641,6 +1688,42 @@ export default function TestCaseRepository() {
                         )}
                       </div>
                     )}
+                  {/* Test Type Selector */}
+                  <div className="mt-4">
+                    <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Test Case Type</label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setImportTestType("Manual")}
+                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${importTestType === "Manual" ? "bg-primary text-white shadow-md" : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"}`}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">person</span>
+                        Manual
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImportTestType("Automated")}
+                        className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${importTestType === "Automated" ? "bg-primary text-white shadow-md" : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"}`}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">precision_manufacturing</span>
+                        Automated
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-on-surface-variant mt-1.5 font-medium">All imported test cases will be tagged as {importTestType}.{importTestType === "Automated" ? " An automated run will be created with the CSV results." : ""}</p>
+                  </div>
+
+                  {/* Link to Test Plan (optional) */}
+                  {importTestType === "Automated" && (
+                    <div className="mt-4">
+                      <label className="block text-[11px] font-extrabold text-on-surface-variant mb-1.5 uppercase tracking-wider">Link to Test Plan (optional)</label>
+                      <select value={importPlanId} onChange={e => setImportPlanId(e.target.value)}
+                        className="w-full bg-surface-container-low border border-outline-variant px-3 py-2.5 rounded-lg text-sm focus:outline-none cursor-pointer shadow-sm">
+                        <option value="">No Plan</option>
+                        {testPlans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                      <p className="text-[10px] text-on-surface-variant mt-1 font-medium">The automated run will be linked to this plan for sprint tracking.</p>
+                    </div>
+                  )}
                   </div>
                 </div>
               )}

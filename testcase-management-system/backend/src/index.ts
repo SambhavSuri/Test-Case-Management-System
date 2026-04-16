@@ -4,6 +4,8 @@ import path from "path";
 import * as db from "./utils/jsonDb";
 import multer from "multer";
 import { promises as fs } from "fs";
+import { readdirSync } from "fs";
+import { spawn, ChildProcess } from "child_process";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -97,6 +99,134 @@ app.get("/api/azure/workitem/:id", async (req, res) => {
   }
 });
 
+// Update work item state
+app.put("/api/azure/workitem/:id/state", async (req, res) => {
+  if (!AZURE_ORG_URL || !AZURE_PAT) return res.status(500).json({ error: "Azure not configured" });
+  const { state } = req.body;
+  if (!state) return res.status(400).json({ error: "State required" });
+  try {
+    const patchDoc = [{ op: "add", path: "/fields/System.State", value: state }];
+    const r = await fetch(`${AZURE_ORG_URL}/${encodeURIComponent(AZURE_PROJECT)}/_apis/wit/workitems/${req.params.id}?api-version=7.0`, {
+      method: "PATCH", headers: azurePatchHeaders, body: JSON.stringify(patchDoc),
+    });
+    if (!r.ok) { const errText = await r.text(); return res.status(500).json({ error: "Failed to update state", details: errText }); }
+    const wi = await r.json();
+    res.json({ id: wi.id, state: wi.fields?.["System.State"] });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Fetch sprints (iterations) from Azure DevOps across all teams
+app.get("/api/azure/sprints", async (_req, res) => {
+  if (!AZURE_ORG_URL || !AZURE_PAT) return res.status(500).json({ error: "Azure not configured" });
+  try {
+    // Fetch all teams
+    const teamsRes = await fetch(`${AZURE_ORG_URL}/_apis/projects/${encodeURIComponent(AZURE_PROJECT)}/teams?api-version=7.0`, { headers: azureHeaders });
+    if (!teamsRes.ok) return res.status(500).json({ error: "Failed to fetch teams" });
+    const teamsData = await teamsRes.json();
+
+    const allSprints: any[] = [];
+    const seen = new Set<string>();
+
+    for (const team of teamsData.value || []) {
+      const iterRes = await fetch(`${AZURE_ORG_URL}/${encodeURIComponent(AZURE_PROJECT)}/${encodeURIComponent(team.name)}/_apis/work/teamsettings/iterations?api-version=7.0`, { headers: azureHeaders });
+      if (!iterRes.ok) continue;
+      const iterData = await iterRes.json();
+      for (const iter of iterData.value || []) {
+        if (seen.has(iter.id)) continue;
+        seen.add(iter.id);
+        const attrs = iter.attributes || {};
+        allSprints.push({
+          id: iter.id,
+          name: iter.name,
+          path: iter.path,
+          startDate: attrs.startDate ? attrs.startDate.split("T")[0] : "",
+          endDate: attrs.finishDate ? attrs.finishDate.split("T")[0] : "",
+          timeFrame: attrs.timeFrame || "future",
+        });
+      }
+    }
+
+    // Also fetch project-level iterations to catch any not assigned to a team
+    const projIterRes = await fetch(`${AZURE_ORG_URL}/${encodeURIComponent(AZURE_PROJECT)}/_apis/wit/classificationnodes/iterations?$depth=10&api-version=7.0`, { headers: azureHeaders });
+    if (projIterRes.ok) {
+      const projIterData = await projIterRes.json();
+      const walkNodes = (node: any) => {
+        if (node.identifier && !seen.has(node.identifier)) {
+          seen.add(node.identifier);
+          const attrs = node.attributes || {};
+          allSprints.push({
+            id: node.identifier,
+            name: node.name,
+            path: node.path || node.name,
+            startDate: attrs.startDate ? attrs.startDate.split("T")[0] : "",
+            endDate: attrs.finishDate ? attrs.finishDate.split("T")[0] : "",
+            timeFrame: "future",
+          });
+        }
+        for (const child of node.children || []) walkNodes(child);
+      };
+      // Walk children, skip the root node itself
+      for (const child of projIterData.children || []) walkNodes(child);
+    }
+
+    res.json(allSprints);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Sync sprints into test plans
+app.post("/api/azure/sync-sprints", async (_req, res) => {
+  if (!AZURE_ORG_URL || !AZURE_PAT) return res.status(500).json({ error: "Azure not configured" });
+  try {
+    // Fetch sprints
+    const sprintsRes = await fetch(`http://localhost:${process.env.PORT || 3001}/api/azure/sprints`);
+    if (!sprintsRes.ok) return res.status(500).json({ error: "Failed to fetch sprints" });
+    const sprints = await sprintsRes.json();
+
+    // Fetch existing plans
+    const plans = await db.readCollection("testplans");
+
+    let created = 0, updated = 0;
+    for (const sprint of sprints) {
+      const existing = plans.find((p: any) => p.azureIterationId === sprint.id);
+      if (existing) {
+        // Update dates if changed
+        const needsUpdate = existing.startDate !== sprint.startDate || existing.endDate !== sprint.endDate || existing.name !== sprint.name;
+        if (needsUpdate) {
+          await db.update("testplans", existing.id, {
+            name: sprint.name,
+            startDate: sprint.startDate,
+            endDate: sprint.endDate,
+          });
+          updated++;
+        }
+      } else {
+        // Create new plan from sprint
+        await db.insert("testplans", {
+          name: sprint.name,
+          description: `Synced from Azure DevOps: ${sprint.path}`,
+          status: sprint.timeFrame === "past" ? "Completed" : "In Progress",
+          owner: "",
+          startDate: sprint.startDate,
+          endDate: sprint.endDate,
+          createdAt: new Date().toISOString().split("T")[0],
+          azureIterationId: sprint.id,
+          azureIterationPath: sprint.path,
+          assignments: [],
+        });
+        created++;
+      }
+    }
+
+    res.json({ synced: sprints.length, created, updated });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get("/api/azure/workitem/:id/comments", async (req, res) => {
   if (!AZURE_ORG_URL || !AZURE_PAT) return res.status(500).json({ error: "Azure not configured" });
   try {
@@ -121,6 +251,369 @@ app.post("/api/azure/workitem/:id/comments", async (req, res) => {
     if (!r.ok) return res.status(500).json({ error: "Failed to add comment", details: await r.text() });
     const c = await r.json();
     res.json({ id: c.id, text: c.text, createdBy: c.createdBy?.displayName, createdDate: c.createdDate, source: "tcms" });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── Automation Runner ────────────────────────────────────
+const AUTOMATION_SUITE_DIR = process.env.AUTOMATION_SUITE_PATH || path.resolve(__dirname, "..", "..", "..", "..", "Automated_UI_Test_Cases");
+let activeAutomationProcess: ChildProcess | null = null;
+
+// Persistent run state so frontend can reconnect after tab switch
+interface AutomationRunState {
+  isRunning: boolean;
+  outputLines: { type: string; text: string }[];
+  progress: { passed: number; failed: number; skipped: number; errors: number; total: number };
+  results: any[] | null;
+  runId: string;
+  planId: string;
+  exitCode: number | null;
+}
+let automationRunState: AutomationRunState = {
+  isRunning: false, outputLines: [], progress: { passed: 0, failed: 0, skipped: 0, errors: 0, total: 0 },
+  results: null, runId: "", planId: "", exitCode: null,
+};
+
+// Get current automation run state (for reconnecting after tab switch)
+app.get("/api/automation/status", (_req, res) => {
+  res.json(automationRunState);
+});
+
+// Reconnect to active automation run SSE stream
+app.get("/api/automation/reconnect", (req, res) => {
+  const clients = (globalThis as any).__automationSSEClients as Set<typeof res> | null;
+  if (!clients || !activeAutomationProcess) {
+    res.status(404).json({ error: "No active run to reconnect to" });
+    return;
+  }
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream", "Cache-Control": "no-cache",
+    "Connection": "keep-alive", "Access-Control-Allow-Origin": "*",
+  });
+  clients.add(res);
+  req.on("close", () => { clients.delete(res); });
+});
+
+// Cancel the running automation
+app.post("/api/automation/cancel", (_req, res) => {
+  if (activeAutomationProcess) {
+    activeAutomationProcess.kill("SIGTERM");
+    activeAutomationProcess = null;
+    automationRunState.isRunning = false;
+    automationRunState.outputLines.push({ type: "error", text: "Run cancelled by user." });
+    res.json({ cancelled: true });
+  } else {
+    res.json({ cancelled: false, message: "No run in progress" });
+  }
+});
+
+// List available test files with their test functions
+app.get("/api/automation/test-files", async (_req, res) => {
+  try {
+    const testsDir = path.join(AUTOMATION_SUITE_DIR, "tests");
+    const files = readdirSync(testsDir).filter(f => f.startsWith("test_") && f.endsWith(".py")).sort();
+    const result = [];
+    for (const f of files) {
+      const raw = f.replace(/^test_\d+_/, "").replace(".py", "").replace(/_/g, " ");
+      const displayName = raw.charAt(0).toUpperCase() + raw.slice(1);
+      // Parse test function names from the file
+      const content = await fs.readFile(path.join(testsDir, f), "utf-8");
+      const testFunctions = content.match(/^def (test_\w+)/gm)?.map(m => m.replace("def ", "")) || [];
+      result.push({ filename: f, displayName, testCount: testFunctions.length, tests: testFunctions });
+    }
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Run pytest with SSE streaming
+app.get("/api/automation/run", (req, res) => {
+  if (activeAutomationProcess) {
+    res.status(409).json({ error: "A run is already in progress" });
+    return;
+  }
+
+  const filesParam = (req.query.files as string) || "all";
+  const planId = req.query.planId as string || "";
+
+  // SSE headers
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "Access-Control-Allow-Origin": "*",
+  });
+
+  // Build pytest args
+  const args = ["-m", "pytest"];
+  if (filesParam === "all") {
+    args.push("tests/");
+  } else {
+    filesParam.split(",").forEach(f => {
+      const trimmed = f.trim();
+      // Support both "test_01_login.py" and "test_01_login.py::test_tc01_valid_login"
+      args.push(trimmed.startsWith("tests/") ? trimmed : `tests/${trimmed}`);
+    });
+  }
+  args.push("-v", "--tb=short", "--color=no");
+
+  // Reset run state
+  automationRunState = {
+    isRunning: true, outputLines: [], progress: { passed: 0, failed: 0, skipped: 0, errors: 0, total: 0 },
+    results: null, runId: "", planId, exitCode: null,
+  };
+
+  // Track all SSE clients so we can broadcast to reconnected clients
+  const sseClients = new Set<typeof res>();
+  sseClients.add(res);
+
+  const sendEvent = (data: any) => {
+    // Persist to state
+    if (data.type === "output" || data.type === "error" || data.type === "status") {
+      automationRunState.outputLines.push({ type: data.type, text: data.line || data.message || "" });
+      // Cap at 3000 lines
+      if (automationRunState.outputLines.length > 3000) automationRunState.outputLines = automationRunState.outputLines.slice(-2000);
+    }
+    if (data.type === "progress") {
+      automationRunState.progress = data;
+    }
+    // Send to all connected clients
+    for (const client of sseClients) {
+      try { client.write(`data: ${JSON.stringify(data)}\n\n`); } catch { sseClients.delete(client); }
+    }
+  };
+
+  // Allow other clients to subscribe to the active run
+  (globalThis as any).__automationSSEClients = sseClients;
+
+  sendEvent({ type: "status", message: `Starting pytest: python3 ${args.join(" ")}` });
+
+  const child = spawn("python3", args, {
+    cwd: AUTOMATION_SUITE_DIR,
+    env: { ...process.env, PYTHONUNBUFFERED: "1" },
+  });
+  activeAutomationProcess = child;
+
+  let passed = 0, failed = 0, skipped = 0, errors = 0;
+
+  const processLine = (line: string) => {
+    sendEvent({ type: "output", line });
+    if (line.includes(" PASSED")) passed++;
+    else if (line.includes(" FAILED")) failed++;
+    else if (line.includes(" SKIPPED")) skipped++;
+    else if (line.includes(" ERROR")) errors++;
+    sendEvent({ type: "progress", passed, failed, skipped, errors, total: passed + failed + skipped + errors });
+  };
+
+  let stdoutBuffer = "";
+  child.stdout.on("data", (chunk: Buffer) => {
+    stdoutBuffer += chunk.toString();
+    const lines = stdoutBuffer.split("\n");
+    stdoutBuffer = lines.pop() || "";
+    lines.forEach(l => { if (l.trim()) processLine(l); });
+  });
+
+  child.stderr.on("data", (chunk: Buffer) => {
+    const lines = chunk.toString().split("\n");
+    lines.forEach(l => { if (l.trim()) sendEvent({ type: "error", line: l }); });
+  });
+
+  child.on("close", async (exitCode) => {
+    activeAutomationProcess = null;
+    if (stdoutBuffer.trim()) processLine(stdoutBuffer);
+
+    // Read results_final.json
+    let results: any[] = [];
+    try {
+      const resultsPath = path.join(AUTOMATION_SUITE_DIR, "reports", "results_final.json");
+      const data = await fs.readFile(resultsPath, "utf-8");
+      results = JSON.parse(data);
+    } catch (e: any) {
+      console.error("Could not read results_final.json:", e.message);
+      sendEvent({ type: "error", line: "Could not read results_final.json: " + e.message });
+    }
+
+    console.log(`Automation complete: ${results.length} results to import`);
+
+    // Auto-import: create project, test cases, and run
+    let runId = "";
+    if (results.length > 0) {
+      try {
+        sendEvent({ type: "status", message: "Importing results into TCMS..." });
+        const mapSt = (s: string) => s === "PASS" ? "Passed" : s === "FAIL" ? "Failed" : s === "SKIP" ? "Skipped" : "Untested";
+        const parseSteps = (s: string) => s ? s.split("\n").map(l => l.replace(/^\d+\.\s*/, "").trim()).filter(Boolean).map(step => ({ step, expected: "" })) : [];
+
+        // Find or create project
+        const allProjects = await db.readCollection("projects");
+        let autoProj = allProjects.find((p: any) => p.name === "Automated Tests");
+        if (!autoProj) autoProj = await db.insert("projects", { name: "Automated Tests", modules: [{ name: "UI Tests", suites: [] }] });
+        const projId = autoProj.id;
+
+        // Ensure suites exist
+        const suiteNames = new Set(results.map((r: any) => r.page || "Automated"));
+        let mod = autoProj.modules[0];
+        if (!mod) { autoProj.modules = [{ name: "UI Tests", suites: [] }]; mod = autoProj.modules[0]; }
+        let suiteUpdated = false;
+        for (const s of suiteNames) { if (!mod.suites.includes(s)) { mod.suites.push(s); suiteUpdated = true; } }
+        if (suiteUpdated) await db.update("projects", projId, { modules: autoProj.modules });
+
+        // Upsert test cases
+        const existingCases = await db.readCollection("testcases");
+        const runResults: any[] = [];
+        for (const r of results) {
+          let tc = existingCases.find((t: any) => t.title === r.test_name && t.projectId === projId);
+          if (!tc) {
+            tc = await db.insert("testcases", {
+              title: r.test_name, description: r.expected ? `Expected: ${r.expected}` : "", priority: "Medium", type: "Functional",
+              status: "Active", automationStatus: "Automated", locked: true, lastRun: r.timestamp || new Date().toISOString(),
+              projectId: projId, suite: r.page || "Automated", steps: parseSteps(r.steps), tags: r.duration ? [`${r.duration}s`] : [],
+            });
+            existingCases.push(tc);
+          } else {
+            await db.update("testcases", tc.id, { lastRun: r.timestamp || new Date().toISOString() });
+          }
+          runResults.push({ testCaseId: tc.id, status: mapSt(r.status), comment: r.remarks || undefined });
+        }
+
+        // Create run
+        const run = await db.insert("testruns", {
+          name: `Automated Run — ${new Date().toISOString().split("T")[0]}`,
+          assignedTo: "Automation Script", projectId: projId, planId: planId || undefined,
+          status: "In Progress", runType: "Automated", createdAt: new Date().toISOString().split("T")[0], results: runResults,
+        });
+        runId = run.id;
+        sendEvent({ type: "status", message: `Run created: ${runId}` });
+      } catch (importErr: any) {
+        console.error("Auto-import failed:", importErr);
+        sendEvent({ type: "error", line: `Auto-import failed: ${importErr.message}` });
+      }
+    }
+
+    // Persist final state
+    automationRunState.isRunning = false;
+    automationRunState.results = results;
+    automationRunState.runId = runId;
+    automationRunState.exitCode = exitCode;
+    automationRunState.progress = { passed, failed, skipped, errors, total: passed + failed + skipped + errors };
+
+    sendEvent({ type: "complete", results, exitCode, passed, failed, skipped, errors, planId, runId });
+    // Close all SSE connections
+    for (const client of sseClients) { try { client.end(); } catch {} }
+    sseClients.clear();
+    (globalThis as any).__automationSSEClients = null;
+  });
+
+  // Keepalive
+  const keepalive = setInterval(() => {
+    for (const client of sseClients) { try { client.write(": keepalive\n\n"); } catch { sseClients.delete(client); } }
+    if (sseClients.size === 0 && !activeAutomationProcess) clearInterval(keepalive);
+  }, 30000);
+
+  // On client disconnect — just remove from SSE clients, DON'T kill the process
+  req.on("close", () => {
+    sseClients.delete(res);
+  });
+});
+
+// Import automation results into TCMS
+app.post("/api/automation/import-results", async (req, res) => {
+  const { results, projectId, planId, runName } = req.body;
+  if (!results || !Array.isArray(results) || results.length === 0) {
+    return res.status(400).json({ error: "No results provided" });
+  }
+
+  // Auto-find or create "Automated Tests" project
+  let targetProjectId = projectId || "";
+  if (!targetProjectId) {
+    const projects = await db.readCollection("projects");
+    let autoProj = projects.find((p: any) => p.name === "Automated Tests");
+    if (!autoProj) {
+      autoProj = await db.insert("projects", { name: "Automated Tests", modules: [{ name: "UI Tests", suites: [] }] });
+    }
+    targetProjectId = autoProj.id;
+  }
+
+  const mapStatus = (s: string): string => {
+    if (s === "PASS") return "Passed";
+    if (s === "FAIL") return "Failed";
+    if (s === "SKIP") return "Skipped";
+    return "Untested";
+  };
+
+  const parseSteps = (stepsStr: string): { step: string; expected: string }[] => {
+    if (!stepsStr) return [];
+    return stepsStr.split("\n").map(s => s.replace(/^\d+\.\s*/, "").trim()).filter(Boolean).map(step => ({ step, expected: "" }));
+  };
+
+  try {
+    // Ensure suites exist in the project structure
+    const projects = await db.readCollection("projects");
+    const autoProj = projects.find((p: any) => p.id === targetProjectId);
+    if (autoProj) {
+      const suiteNames = new Set(results.map((r: any) => r.page || "Automated").filter(Boolean));
+      let mod = autoProj.modules[0];
+      if (!mod) { autoProj.modules = [{ name: "UI Tests", suites: [] }]; mod = autoProj.modules[0]; }
+      let updated = false;
+      for (const s of suiteNames) {
+        if (!mod.suites.includes(s)) { mod.suites.push(s); updated = true; }
+      }
+      if (updated) await db.update("projects", autoProj.id, { modules: autoProj.modules });
+    }
+
+    // Upsert test cases and build run results
+    const existingCases = await db.readCollection("testcases");
+    const runResults: { testCaseId: string; status: string; comment?: string }[] = [];
+
+    for (const r of results) {
+      let tc = existingCases.find((t: any) => t.title === r.test_name && t.projectId === targetProjectId);
+      if (!tc) {
+        tc = await db.insert("testcases", {
+          title: r.test_name,
+          description: r.expected ? `Expected: ${r.expected}` : "",
+          priority: "Medium",
+          type: "Functional",
+          status: "Active",
+          automationStatus: "Automated",
+          locked: true,
+          lastRun: r.timestamp || new Date().toISOString(),
+          projectId: targetProjectId,
+          suite: r.page || "Automated",
+          steps: parseSteps(r.steps),
+          tags: r.duration ? [`${r.duration}s`] : [],
+        });
+        existingCases.push(tc);
+      } else {
+        await db.update("testcases", tc.id, { lastRun: r.timestamp || new Date().toISOString() });
+      }
+      runResults.push({
+        testCaseId: tc.id,
+        status: mapStatus(r.status),
+        comment: r.remarks || undefined,
+      });
+    }
+
+    // Create test run
+    const run = await db.insert("testruns", {
+      name: runName || `Automated Run — ${new Date().toISOString().split("T")[0]}`,
+      assignedTo: "Automation Script",
+      projectId: targetProjectId,
+      planId: planId || undefined,
+      status: "In Progress",
+      runType: "Automated",
+      createdAt: new Date().toISOString().split("T")[0],
+      results: runResults,
+    });
+
+    const summary = {
+      total: runResults.length,
+      passed: runResults.filter(r => r.status === "Passed").length,
+      failed: runResults.filter(r => r.status === "Failed").length,
+      skipped: runResults.filter(r => r.status === "Skipped").length,
+    };
+
+    res.json({ runId: run.id, summary });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
