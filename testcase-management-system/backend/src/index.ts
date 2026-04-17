@@ -266,13 +266,14 @@ interface AutomationRunState {
   outputLines: { type: string; text: string }[];
   progress: { passed: number; failed: number; skipped: number; errors: number; total: number };
   results: any[] | null;
+  liveResults: any[];
   runId: string;
   planId: string;
   exitCode: number | null;
 }
 let automationRunState: AutomationRunState = {
   isRunning: false, outputLines: [], progress: { passed: 0, failed: 0, skipped: 0, errors: 0, total: 0 },
-  results: null, runId: "", planId: "", exitCode: null,
+  results: null, liveResults: [], runId: "", planId: "", exitCode: null,
 };
 
 // Get current automation run state (for reconnecting after tab switch)
@@ -293,6 +294,15 @@ app.get("/api/automation/reconnect", (req, res) => {
   });
   clients.add(res);
   req.on("close", () => { clients.delete(res); });
+});
+
+// Reset automation state (clear completed run so user can start fresh)
+app.post("/api/automation/reset", (_req, res) => {
+  automationRunState = {
+    isRunning: false, outputLines: [], progress: { passed: 0, failed: 0, skipped: 0, errors: 0, total: 0 },
+    results: null, liveResults: [], runId: "", planId: "", exitCode: null,
+  };
+  res.json({ reset: true });
 });
 
 // Cancel the running automation
@@ -328,83 +338,113 @@ app.get("/api/automation/test-files", async (_req, res) => {
   }
 });
 
-// Run pytest with SSE streaming
-app.get("/api/automation/run", (req, res) => {
-  if (activeAutomationProcess) {
-    res.status(409).json({ error: "A run is already in progress" });
-    return;
-  }
-
-  const filesParam = (req.query.files as string) || "all";
-  const planId = req.query.planId as string || "";
-
+// ── Shared pytest runner helper ─────────────────────────
+function startPytestRun(
+  req: express.Request, res: express.Response,
+  pytestArgs: string[], planId: string,
+  initialProgress: { passed: number; failed: number; skipped: number; errors: number },
+  preSentResults: Set<string>
+) {
   // SSE headers
   res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    "Connection": "keep-alive",
-    "Access-Control-Allow-Origin": "*",
+    "Content-Type": "text/event-stream", "Cache-Control": "no-cache",
+    "Connection": "keep-alive", "Access-Control-Allow-Origin": "*",
   });
 
-  // Build pytest args
-  const args = ["-m", "pytest"];
-  if (filesParam === "all") {
-    args.push("tests/");
-  } else {
-    filesParam.split(",").forEach(f => {
-      const trimmed = f.trim();
-      // Support both "test_01_login.py" and "test_01_login.py::test_tc01_valid_login"
-      args.push(trimmed.startsWith("tests/") ? trimmed : `tests/${trimmed}`);
-    });
-  }
-  args.push("-v", "--tb=short", "--color=no");
-
-  // Reset run state
+  // Reset run state (preserve initial progress for resume)
   automationRunState = {
-    isRunning: true, outputLines: [], progress: { passed: 0, failed: 0, skipped: 0, errors: 0, total: 0 },
-    results: null, runId: "", planId, exitCode: null,
+    isRunning: true, outputLines: [], progress: {
+      passed: initialProgress.passed, failed: initialProgress.failed,
+      skipped: initialProgress.skipped, errors: initialProgress.errors,
+      total: initialProgress.passed + initialProgress.failed + initialProgress.skipped + initialProgress.errors
+    },
+    results: null, liveResults: [], runId: "", planId, exitCode: null,
   };
 
-  // Track all SSE clients so we can broadcast to reconnected clients
   const sseClients = new Set<typeof res>();
   sseClients.add(res);
 
   const sendEvent = (data: any) => {
-    // Persist to state
     if (data.type === "output" || data.type === "error" || data.type === "status") {
       automationRunState.outputLines.push({ type: data.type, text: data.line || data.message || "" });
-      // Cap at 3000 lines
       if (automationRunState.outputLines.length > 3000) automationRunState.outputLines = automationRunState.outputLines.slice(-2000);
     }
-    if (data.type === "progress") {
-      automationRunState.progress = data;
-    }
-    // Send to all connected clients
+    if (data.type === "progress") automationRunState.progress = data;
     for (const client of sseClients) {
       try { client.write(`data: ${JSON.stringify(data)}\n\n`); } catch { sseClients.delete(client); }
     }
   };
 
-  // Allow other clients to subscribe to the active run
   (globalThis as any).__automationSSEClients = sseClients;
 
-  sendEvent({ type: "status", message: `Starting pytest: python3 ${args.join(" ")}` });
+  sendEvent({ type: "status", message: `Starting pytest: python3 ${pytestArgs.join(" ")}` });
 
-  const child = spawn("python3", args, {
+  const child = spawn("python3", pytestArgs, {
     cwd: AUTOMATION_SUITE_DIR,
     env: { ...process.env, PYTHONUNBUFFERED: "1" },
   });
   activeAutomationProcess = child;
 
-  let passed = 0, failed = 0, skipped = 0, errors = 0;
+  let passed = initialProgress.passed, failed = initialProgress.failed;
+  let skipped = initialProgress.skipped, errors = initialProgress.errors;
+  const sentResultNames = new Set<string>(preSentResults);
+
+  const readLiveResults = async () => {
+    try {
+      const reportsDir = path.join(AUTOMATION_SUITE_DIR, "reports");
+      const allFiles = readdirSync(reportsDir);
+      const workerFiles = allFiles.filter(f => f.startsWith("_results_") && f.endsWith(".json"));
+      const newResults: any[] = [];
+      for (const wf of workerFiles) {
+        try {
+          const data = JSON.parse(await fs.readFile(path.join(reportsDir, wf), "utf-8"));
+          for (const r of data) {
+            if (!sentResultNames.has(r.test_name)) {
+              sentResultNames.add(r.test_name);
+              newResults.push(r);
+            }
+          }
+        } catch {}
+      }
+      if (newResults.length > 0) {
+        automationRunState.liveResults.push(...newResults);
+        sendEvent({ type: "result", results: newResults });
+      }
+    } catch {}
+  };
+
+  // Track seen test node IDs to avoid double-counting with xdist
+  const countedTests = new Set<string>();
 
   const processLine = (line: string) => {
     sendEvent({ type: "output", line });
-    if (line.includes(" PASSED")) passed++;
-    else if (line.includes(" FAILED")) failed++;
-    else if (line.includes(" SKIPPED")) skipped++;
-    else if (line.includes(" ERROR")) errors++;
-    sendEvent({ type: "progress", passed, failed, skipped, errors, total: passed + failed + skipped + errors });
+
+    // Match xdist format: "[gw0] [ 5%] PASSED tests/test_01_login.py::test_tc01_valid_login"
+    // Or standard format: "tests/test_01_login.py::test_tc01_valid_login PASSED"
+    const xdistMatch = line.match(/\[gw\d+\]\s+\[[\s\d]+%\]\s+(PASSED|FAILED|SKIPPED|ERROR)\s+(.+)/);
+    const stdMatch = line.match(/(tests\/\S+::\S+)\s+(PASSED|FAILED|SKIPPED|ERROR)/);
+
+    let status = "";
+    let testId = "";
+    if (xdistMatch) {
+      status = xdistMatch[1];
+      testId = xdistMatch[2].trim();
+    } else if (stdMatch) {
+      status = stdMatch[2];
+      testId = stdMatch[1].trim();
+    }
+
+    if (status && testId && !countedTests.has(testId)) {
+      countedTests.add(testId);
+      if (status === "PASSED") passed++;
+      else if (status === "FAILED") failed++;
+      else if (status === "SKIPPED") skipped++;
+      else if (status === "ERROR") errors++;
+      sendEvent({ type: "progress", passed, failed, skipped, errors, total: passed + failed + skipped + errors });
+      setTimeout(() => readLiveResults(), 100);
+    } else if (!status) {
+      // Non-test-result line — still send progress for display consistency
+    }
   };
 
   let stdoutBuffer = "";
@@ -424,7 +464,6 @@ app.get("/api/automation/run", (req, res) => {
     activeAutomationProcess = null;
     if (stdoutBuffer.trim()) processLine(stdoutBuffer);
 
-    // Read results_final.json
     let results: any[] = [];
     try {
       const resultsPath = path.join(AUTOMATION_SUITE_DIR, "reports", "results_final.json");
@@ -437,7 +476,6 @@ app.get("/api/automation/run", (req, res) => {
 
     console.log(`Automation complete: ${results.length} results to import`);
 
-    // Auto-import: create project, test cases, and run
     let runId = "";
     if (results.length > 0) {
       try {
@@ -445,13 +483,11 @@ app.get("/api/automation/run", (req, res) => {
         const mapSt = (s: string) => s === "PASS" ? "Passed" : s === "FAIL" ? "Failed" : s === "SKIP" ? "Skipped" : "Untested";
         const parseSteps = (s: string) => s ? s.split("\n").map(l => l.replace(/^\d+\.\s*/, "").trim()).filter(Boolean).map(step => ({ step, expected: "" })) : [];
 
-        // Find or create project
         const allProjects = await db.readCollection("projects");
         let autoProj = allProjects.find((p: any) => p.name === "Automated Tests");
         if (!autoProj) autoProj = await db.insert("projects", { name: "Automated Tests", modules: [{ name: "UI Tests", suites: [] }] });
         const projId = autoProj.id;
 
-        // Ensure suites exist
         const suiteNames = new Set(results.map((r: any) => r.page || "Automated"));
         let mod = autoProj.modules[0];
         if (!mod) { autoProj.modules = [{ name: "UI Tests", suites: [] }]; mod = autoProj.modules[0]; }
@@ -459,7 +495,6 @@ app.get("/api/automation/run", (req, res) => {
         for (const s of suiteNames) { if (!mod.suites.includes(s)) { mod.suites.push(s); suiteUpdated = true; } }
         if (suiteUpdated) await db.update("projects", projId, { modules: autoProj.modules });
 
-        // Upsert test cases
         const existingCases = await db.readCollection("testcases");
         const runResults: any[] = [];
         for (const r of results) {
@@ -477,7 +512,6 @@ app.get("/api/automation/run", (req, res) => {
           runResults.push({ testCaseId: tc.id, status: mapSt(r.status), comment: r.remarks || undefined });
         }
 
-        // Create run
         const run = await db.insert("testruns", {
           name: `Automated Run — ${new Date().toISOString().split("T")[0]}`,
           assignedTo: "Automation Script", projectId: projId, planId: planId || undefined,
@@ -491,7 +525,6 @@ app.get("/api/automation/run", (req, res) => {
       }
     }
 
-    // Persist final state
     automationRunState.isRunning = false;
     automationRunState.results = results;
     automationRunState.runId = runId;
@@ -499,22 +532,163 @@ app.get("/api/automation/run", (req, res) => {
     automationRunState.progress = { passed, failed, skipped, errors, total: passed + failed + skipped + errors };
 
     sendEvent({ type: "complete", results, exitCode, passed, failed, skipped, errors, planId, runId });
-    // Close all SSE connections
     for (const client of sseClients) { try { client.end(); } catch {} }
     sseClients.clear();
     (globalThis as any).__automationSSEClients = null;
   });
 
-  // Keepalive
   const keepalive = setInterval(() => {
     for (const client of sseClients) { try { client.write(": keepalive\n\n"); } catch { sseClients.delete(client); } }
     if (sseClients.size === 0 && !activeAutomationProcess) clearInterval(keepalive);
   }, 30000);
 
-  // On client disconnect — just remove from SSE clients, DON'T kill the process
-  req.on("close", () => {
-    sseClients.delete(res);
-  });
+  req.on("close", () => { sseClients.delete(res); });
+}
+
+// Helper: read per-worker JSON files and return completed test names + counts
+async function readInterruptedResults(): Promise<{ completedTests: string[]; passed: number; failed: number; skipped: number; errors: number }> {
+  const reportsDir = path.join(AUTOMATION_SUITE_DIR, "reports");
+  const allFiles = readdirSync(reportsDir);
+  const workerFiles = allFiles.filter(f => f.startsWith("_results_") && f.endsWith(".json"));
+  const completedTests: string[] = [];
+  let passed = 0, failed = 0, skipped = 0, errors = 0;
+  for (const wf of workerFiles) {
+    try {
+      const data = JSON.parse(await fs.readFile(path.join(reportsDir, wf), "utf-8"));
+      for (const r of data) {
+        if (!completedTests.includes(r.test_name)) {
+          completedTests.push(r.test_name);
+          if (r.status === "PASS") passed++;
+          else if (r.status === "FAIL") failed++;
+          else if (r.status === "SKIP") skipped++;
+          else errors++;
+        }
+      }
+    } catch {}
+  }
+  return { completedTests, passed, failed, skipped, errors };
+}
+
+// Run pytest with SSE streaming
+app.get("/api/automation/run", (req, res) => {
+  if (activeAutomationProcess) {
+    res.status(409).json({ error: "A run is already in progress" });
+    return;
+  }
+
+  const filesParam = (req.query.files as string) || "all";
+  const planId = req.query.planId as string || "";
+
+  const args = ["-m", "pytest"];
+  if (filesParam === "all") {
+    args.push("tests/");
+  } else {
+    filesParam.split(",").forEach(f => {
+      const trimmed = f.trim();
+      args.push(trimmed.startsWith("tests/") ? trimmed : `tests/${trimmed}`);
+    });
+  }
+  args.push("-n", "2", "-v", "--tb=short", "--color=no");
+
+  startPytestRun(req, res, args, planId, { passed: 0, failed: 0, skipped: 0, errors: 0 }, new Set());
+});
+
+// Check for interrupted run (per-worker JSONs exist but no fresh results_final.json)
+app.get("/api/automation/interrupted-status", async (_req, res) => {
+  if (activeAutomationProcess) return res.json({ interrupted: false, isRunning: true });
+
+  try {
+    const reportsDir = path.join(AUTOMATION_SUITE_DIR, "reports");
+    const testsDir = path.join(AUTOMATION_SUITE_DIR, "tests");
+    let allFiles: string[];
+    try { allFiles = readdirSync(reportsDir); } catch { return res.json({ interrupted: false }); }
+    const workerFiles = allFiles.filter(f => f.startsWith("_results_") && f.endsWith(".json"));
+    if (workerFiles.length === 0) return res.json({ interrupted: false });
+
+    // Check if results_final.json is newer than all worker files (= completed run, not interrupted)
+    let resultsFinalMtime = 0;
+    try {
+      const stat = await fs.stat(path.join(reportsDir, "results_final.json"));
+      resultsFinalMtime = stat.mtimeMs;
+    } catch {}
+    let newestWorkerMtime = 0;
+    for (const wf of workerFiles) {
+      try { const stat = await fs.stat(path.join(reportsDir, wf)); newestWorkerMtime = Math.max(newestWorkerMtime, stat.mtimeMs); } catch {}
+    }
+    if (resultsFinalMtime > 0 && resultsFinalMtime >= newestWorkerMtime) return res.json({ interrupted: false });
+
+    const { completedTests, passed, failed, skipped, errors } = await readInterruptedResults();
+
+    // Count total tests from all test files
+    let totalCount = 0;
+    try {
+      const testFileNames = readdirSync(testsDir).filter(f => f.startsWith("test_") && f.endsWith(".py"));
+      for (const tf of testFileNames) {
+        const content = await fs.readFile(path.join(testsDir, tf), "utf-8");
+        const funcs = content.match(/^def (test_\w+)/gm);
+        totalCount += funcs?.length || 0;
+      }
+    } catch {}
+
+    res.json({ interrupted: true, completedCount: completedTests.length, totalCount, passed, failed, skipped, errors });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Resume an interrupted run — skip already-completed tests
+app.get("/api/automation/resume", async (req, res) => {
+  if (activeAutomationProcess) {
+    res.status(409).json({ error: "A run is already in progress" });
+    return;
+  }
+
+  const planId = req.query.planId as string || "";
+  const testsDir = path.join(AUTOMATION_SUITE_DIR, "tests");
+
+  try {
+    const { completedTests, passed, failed, skipped, errors } = await readInterruptedResults();
+    if (completedTests.length === 0) {
+      res.status(400).json({ error: "No interrupted run found to resume" });
+      return;
+    }
+
+    // Build test_name -> node ID mapping (tests/file.py::test_func)
+    const testNodeMap: Record<string, string> = {};
+    const testFileNames = readdirSync(testsDir).filter(f => f.startsWith("test_") && f.endsWith(".py"));
+    for (const tf of testFileNames) {
+      const content = await fs.readFile(path.join(testsDir, tf), "utf-8");
+      const funcs = content.match(/^def (test_\w+)/gm)?.map(m => m.replace("def ", "")) || [];
+      for (const fn of funcs) { testNodeMap[fn] = `tests/${tf}::${fn}`; }
+    }
+
+    // Build pytest args with --deselect for completed tests
+    const args = ["-m", "pytest", "tests/", "-n", "2", "-v", "--tb=short", "--color=no"];
+    for (const testName of completedTests) {
+      const nodeId = testNodeMap[testName];
+      if (nodeId) args.push("--deselect", nodeId);
+    }
+
+    const preSentNames = new Set(completedTests);
+    startPytestRun(req, res, args, planId, { passed, failed, skipped, errors }, preSentNames);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Clear interrupted run files (discard partial results)
+app.post("/api/automation/clear-interrupted", async (_req, res) => {
+  try {
+    const reportsDir = path.join(AUTOMATION_SUITE_DIR, "reports");
+    const allFiles = readdirSync(reportsDir);
+    const workerFiles = allFiles.filter(f => f.startsWith("_results_") && f.endsWith(".json"));
+    for (const wf of workerFiles) {
+      try { await fs.unlink(path.join(reportsDir, wf)); } catch {}
+    }
+    res.json({ cleared: true, filesRemoved: workerFiles.length });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Import automation results into TCMS
@@ -619,6 +793,175 @@ app.post("/api/automation/import-results", async (req, res) => {
   }
 });
 
+// ── Download Reports ────────────────────────────────────
+
+// Download automation report (Excel or CSV from the automation suite output)
+// Uses the NEWEST data source: in-memory state > per-worker JSONs > results_final.json
+app.get("/api/automation/download-report", async (req, res) => {
+  const format = (req.query.format as string) || "excel";
+  const reportsDir = path.join(AUTOMATION_SUITE_DIR, "reports");
+
+  // Determine the freshest data source
+  const getFreshestResults = async (): Promise<any[]> => {
+    // 1. If the current session has results (just completed), use those
+    if (automationRunState.results && automationRunState.results.length > 0) {
+      return automationRunState.results;
+    }
+    // 2. If there are live results from an in-progress or interrupted run, use those
+    if (automationRunState.liveResults && automationRunState.liveResults.length > 0) {
+      return automationRunState.liveResults;
+    }
+
+    // 3. Check file timestamps — prefer per-worker files if they're newer than results_final.json
+    let resultsFinalMtime = 0;
+    try {
+      const stat = await fs.stat(path.join(reportsDir, "results_final.json"));
+      resultsFinalMtime = stat.mtimeMs;
+    } catch {}
+
+    let allFiles: string[];
+    try { allFiles = readdirSync(reportsDir); } catch { allFiles = []; }
+    const workerFiles = allFiles.filter(f => f.startsWith("_results_") && f.endsWith(".json"));
+
+    let newestWorkerMtime = 0;
+    for (const wf of workerFiles) {
+      try { const stat = await fs.stat(path.join(reportsDir, wf)); newestWorkerMtime = Math.max(newestWorkerMtime, stat.mtimeMs); } catch {}
+    }
+
+    // Per-worker files are newer — use them (interrupted/partial run)
+    if (workerFiles.length > 0 && newestWorkerMtime > resultsFinalMtime) {
+      const results: any[] = [];
+      for (const wf of workerFiles) {
+        try { results.push(...JSON.parse(await fs.readFile(path.join(reportsDir, wf), "utf-8"))); } catch {}
+      }
+      const seen = new Set<string>();
+      return results.filter(r => { if (seen.has(r.test_name)) return false; seen.add(r.test_name); return true; });
+    }
+
+    // Fall back to results_final.json
+    if (resultsFinalMtime > 0) {
+      try {
+        return JSON.parse(await fs.readFile(path.join(reportsDir, "results_final.json"), "utf-8"));
+      } catch {}
+    }
+
+    // Last resort: try per-worker files even if no results_final exists
+    if (workerFiles.length > 0) {
+      const results: any[] = [];
+      for (const wf of workerFiles) {
+        try { results.push(...JSON.parse(await fs.readFile(path.join(reportsDir, wf), "utf-8"))); } catch {}
+      }
+      const seen = new Set<string>();
+      return results.filter(r => { if (seen.has(r.test_name)) return false; seen.add(r.test_name); return true; });
+    }
+
+    return [];
+  };
+
+  if (format === "excel") {
+    try {
+      const allFiles = await fs.readdir(reportsDir);
+      const excelFiles = allFiles.filter(f => f.startsWith("test_report_") && f.endsWith(".xlsx")).sort().reverse();
+      if (excelFiles.length === 0) return res.status(404).json({ error: "No Excel report found. Run may be incomplete." });
+      const filePath = path.join(reportsDir, excelFiles[0]);
+      res.download(filePath, excelFiles[0]);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+    return;
+  }
+
+  // CSV format: generate from freshest results
+  try {
+    const results = await getFreshestResults();
+    if (results.length === 0) return res.status(404).json({ error: "No results available to download." });
+
+    results.sort((a, b) => {
+      const numA = parseInt((a.test_id || "TC-9999").split("-")[1]) || 9999;
+      const numB = parseInt((b.test_id || "TC-9999").split("-")[1]) || 9999;
+      return numA - numB;
+    });
+
+    const escCSV = (val: any) => { const s = String(val ?? ""); return (s.includes(",") || s.includes('"') || s.includes("\n")) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const headers = ["Test ID","Test Name","Page","Steps to Reproduce","Expected Result","Actual Result","Status","Duration (s)","Timestamp","Snapshot","Remarks"];
+    const rows = results.map(r => [r.test_id, r.test_name, r.page, r.steps, r.expected, r.actual, r.status, r.duration, r.timestamp, r.snapshot, r.remarks].map(escCSV).join(","));
+    const csv = [headers.join(","), ...rows].join("\n");
+
+    const ts = new Date().toISOString().replace(/[:.]/g, "-").split("T").join("_");
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="test_report_${ts}.csv"`);
+    res.send(csv);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Download per-run report (for any TCMS test run — works for both Manual and Automated)
+app.get("/api/test-runs/:runId/report", async (req, res) => {
+  try {
+    const run = await db.findById("testruns", req.params.runId);
+    if (!run) return res.status(404).json({ error: "Test run not found" });
+
+    const testCases = await db.readCollection("testcases");
+    const escalations = await db.readCollection("escalations");
+    const tcMap = new Map(testCases.map((tc: any) => [tc.id, tc]));
+    const runEscalations = new Set(
+      escalations.filter((e: any) => e.runId === run.id).map((e: any) => e.testCaseId)
+    );
+
+    // Build summary stats
+    const results = run.results || [];
+    const passed = results.filter((r: any) => r.status === "Passed").length;
+    const failed = results.filter((r: any) => r.status === "Failed").length;
+    const skipped = results.filter((r: any) => r.status === "Skipped" || r.status === "Untested").length;
+    const total = results.length;
+    const passRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+
+    const escCSV = (val: any) => { const s = String(val ?? ""); return (s.includes(",") || s.includes('"') || s.includes("\n")) ? `"${s.replace(/"/g, '""')}"` : s; };
+
+    // Summary header rows
+    const summaryRows = [
+      `Run Name,${escCSV(run.name)}`,
+      `Run Type,${escCSV(run.runType || "Manual")}`,
+      `Status,${escCSV(run.status)}`,
+      `Assigned To,${escCSV(run.assignedTo)}`,
+      `Created Date,${escCSV(run.createdAt)}`,
+      ``,
+      `Total Test Cases,${total}`,
+      `Passed,${passed}`,
+      `Failed,${failed}`,
+      `Skipped / Untested,${skipped}`,
+      `Pass Rate,${passRate}%`,
+      ``,
+    ];
+
+    // Data headers
+    const dataHeaders = ["Test Case ID","Title","Suite","Steps","Expected Result","Status","Escalated","Tester Comments"];
+    const dataRows = results.map((r: any) => {
+      const tc = tcMap.get(r.testCaseId) as any;
+      const title = tc?.title || "Unknown";
+      const suite = tc?.suite || "";
+      const steps = tc?.steps?.map((s: any, i: number) => `${i + 1}. ${s.step}`).join("\n") || "";
+      const expected = tc?.steps?.map((s: any, i: number) => s.expected ? `${i + 1}. ${s.expected}` : "").filter(Boolean).join("\n") || "";
+      const escalated = runEscalations.has(r.testCaseId) ? "Yes" : "No";
+      // Combine stepComments into a single string
+      const comments = r.stepComments
+        ? Object.entries(r.stepComments).map(([idx, c]) => `Step ${Number(idx) + 1}: ${c}`).join("; ")
+        : r.comment || "";
+      return [r.testCaseId?.substring(0, 10) || "", title, suite, steps, expected, r.status, escalated, comments].map(escCSV).join(",");
+    });
+
+    const csv = [...summaryRows, dataHeaders.join(","), ...dataRows].join("\n");
+
+    const safeName = (run.name || "Run").replace(/[^a-zA-Z0-9_-]/g, "_");
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="${safeName}_Report.csv"`);
+    res.send(csv);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // --- Example generic routes for JSON local storage ---
 
 app.get("/api/:collection", async (req, res) => {
@@ -690,7 +1033,7 @@ app.post("/api/ai/generate", upload.single("file"), async (req, res) => {
     const LITELLM_API_BASE = process.env.LITELLM_API_BASE || "";
     const LITELLM_USERNAME = process.env.LITELLM_USERNAME || "";
     const LITELLM_PASSWORD = process.env.LITELLM_PASSWORD || "";
-    const LITELLM_MODEL = process.env.LITELLM_MODEL || "gemini/gemini-2.0-flash-lite";
+    const LITELLM_MODEL = process.env.LITELLM_MODEL || "gemini/gemini-2.5-flash";
 
     if (!LITELLM_API_BASE || LITELLM_API_BASE === "your_uri_here") {
       return res.status(500).json({ error: "LITELLM_API_BASE not configured in .env" });
@@ -748,13 +1091,16 @@ ${text}`;
 
     const litellmUrl = `${LITELLM_API_BASE}/chat/completions`;
 
-    const basicAuth = Buffer.from(`${LITELLM_USERNAME}:${LITELLM_PASSWORD}`).toString("base64");
+    // Use Bearer token auth (LiteLLM virtual key), fall back to Basic auth
+    const authHeader = LITELLM_PASSWORD.startsWith("sk-")
+      ? `Bearer ${LITELLM_PASSWORD}`
+      : `Basic ${Buffer.from(`${LITELLM_USERNAME}:${LITELLM_PASSWORD}`).toString("base64")}`;
 
     const litellmRes = await fetch(litellmUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Basic ${basicAuth}`,
+        "Authorization": authHeader,
       },
       body: JSON.stringify({
         model: LITELLM_MODEL,

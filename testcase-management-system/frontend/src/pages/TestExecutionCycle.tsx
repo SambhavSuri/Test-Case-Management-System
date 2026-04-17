@@ -614,6 +614,22 @@ export default function TestExecutionCycle() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    const resp = await fetch(`http://localhost:3001/api/test-runs/${selectedRun.id}/report`);
+                    if (!resp.ok) { const err = await resp.json(); alert(err.error || "Download failed"); return; }
+                    const blob = await resp.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a"); a.href = url;
+                    a.download = resp.headers.get("Content-Disposition")?.split("filename=")[1]?.replace(/"/g, "") || `${selectedRun.name}_Report.csv`;
+                    a.click(); URL.revokeObjectURL(url);
+                  } catch { alert("Download failed. Server may be unavailable."); }
+                }}
+                className="bg-surface border border-outline-variant text-on-surface px-4 py-2 rounded-lg font-bold text-sm hover:bg-surface-container-high active:scale-95 transition flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">download</span> Download Report
+              </button>
               <button onClick={openEscalateModal} className="bg-error/10 border border-error/20 text-error px-5 py-2 rounded-lg font-bold text-sm hover:bg-error/20 active:scale-95 transition flex items-center gap-2">
                 <span className="material-symbols-outlined text-[18px]">flag</span>
                 Escalate{selectedTcIds.size > 0 ? ` (${selectedTcIds.size})` : ""}

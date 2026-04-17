@@ -20,7 +20,17 @@
         "suites": [
           "Select View",
           "Single Dealership",
-          "Recalibration Setup"
+          "Recalibration Setup",
+          "Admin Groups",
+          "Login",
+          "Home Page",
+          "My Dealerships",
+          "My Dealerships Extended",
+          "My Dealerships View By",
+          "Analytics View",
+          "Profile",
+          "Single Dealership Extended",
+          "Dealer Groups"
         ]
       }
     ],

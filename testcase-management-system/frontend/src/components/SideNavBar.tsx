@@ -32,14 +32,7 @@ export default function SideNavBar() {
           <span className="material-symbols-outlined" data-icon="assignment">assignment</span>
           <span className="font-['Inter'] font-medium text-sm">Test Plans</span>
         </Link>
-        <Link to="/requirements" className={`rounded-lg flex items-center gap-3 px-4 py-3 transition-all duration-200 ${path === '/requirements' ? 'bg-white text-primary shadow-sm border border-outline-variant/30 font-bold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 hover:translate-x-1'}`}>
-          <span className="material-symbols-outlined" data-icon="description">description</span>
-          <span className="font-['Inter'] font-medium text-sm">Requirements</span>
-        </Link>
-        <Link to="/reports" className={`rounded-lg flex items-center gap-3 px-4 py-3 transition-all duration-200 ${path === '/reports' ? 'bg-white text-primary shadow-sm border border-outline-variant/30 font-bold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 hover:translate-x-1'}`}>
-          <span className="material-symbols-outlined" data-icon="analytics">analytics</span>
-          <span className="font-['Inter'] font-medium text-sm">Reports</span>
-        </Link>
+        {/* Requirements and Reports tabs hidden — uncomment when needed */}
         <Link to="/automation" className={`rounded-lg flex items-center gap-3 px-4 py-3 transition-all duration-200 ${path === '/automation' ? 'bg-white text-primary shadow-sm border border-outline-variant/30 font-bold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 hover:translate-x-1'}`}>
           <span className="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
           <span className="font-['Inter'] font-medium text-sm">Automation</span>

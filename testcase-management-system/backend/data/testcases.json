@@ -36,7 +36,7 @@
     "status": "Active",
     "automationStatus": "Automated",
     "locked": true,
-    "lastRun": "2026-04-16T16:39:30",
+    "lastRun": "2026-04-17T15:39:28",
     "projectId": "id_1776337734765_kf51gjg",
     "suite": "Select View",
     "steps": [
@@ -70,7 +70,7 @@
     "status": "Active",
     "automationStatus": "Automated",
     "locked": true,
-    "lastRun": "2026-04-16T16:39:34",
+    "lastRun": "2026-04-17T15:39:33",
     "projectId": "id_1776337734765_kf51gjg",
     "suite": "Select View",
     "steps": [
@@ -108,7 +108,7 @@
     "status": "Active",
     "automationStatus": "Automated",
     "locked": true,
-    "lastRun": "2026-04-16T16:39:48",
+    "lastRun": "2026-04-17T15:39:45",
     "projectId": "id_1776337734765_kf51gjg",
     "suite": "Select View",
     "steps": [
@@ -146,7 +146,7 @@
     "status": "Active",
     "automationStatus": "Automated",
     "locked": true,
-    "lastRun": "2026-04-16T16:40:12",
+    "lastRun": "2026-04-17T15:40:09",
     "projectId": "id_1776337734765_kf51gjg",
     "suite": "Select View",
     "steps": [
@@ -180,7 +180,7 @@
     "status": "Active",
     "automationStatus": "Automated",
     "locked": true,
-    "lastRun": "2026-04-16T16:40:13",
+    "lastRun": "2026-04-17T15:40:10",
     "projectId": "id_1776337734765_kf51gjg",
     "suite": "Select View",
     "steps": [
@@ -218,7 +218,7 @@
     "status": "Active",
     "automationStatus": "Automated",
     "locked": true,
-    "lastRun": "2026-04-16T16:43:11",
+    "lastRun": "2026-04-17T12:48:10",
     "projectId": "id_1776337734765_kf51gjg",
     "suite": "Single Dealership",
     "steps": [
@@ -863,5 +863,4867 @@
       "34.76s"
     ],
     "id": "id_1776339100885_uyq2ldz"
+  },
+  {
+    "title": "test_tc272_navigate_to_groups",
+    "description": "Expected: Groups page loads at /admin/groups",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-16T17:25:52",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Admin Groups",
+    "steps": [
+      {
+        "step": "Navigate to Admin Panel",
+        "expected": ""
+      },
+      {
+        "step": "Click Groups in sidebar",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "20.85s"
+    ],
+    "id": "id_1776340573434_w4q804u"
+  },
+  {
+    "title": "test_tc01_valid_login",
+    "description": "Expected: URL changes away from /login; view-mode page loads",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:31:21",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Enter valid username and password",
+        "expected": ""
+      },
+      {
+        "step": "Click the terms checkbox",
+        "expected": ""
+      },
+      {
+        "step": "Click Sign In",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "5.18s"
+    ],
+    "id": "id_1776417393466_l2pgc2l"
+  },
+  {
+    "title": "test_tc02_invalid_username",
+    "description": "Expected: Error message shown; URL stays on /login",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:31:26",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Enter an invalid username and a valid password",
+        "expected": ""
+      },
+      {
+        "step": "Click the terms checkbox",
+        "expected": ""
+      },
+      {
+        "step": "Click Sign In",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "12.17s"
+    ],
+    "id": "id_1776417393468_v3wglkx"
+  },
+  {
+    "title": "test_tc03_invalid_password",
+    "description": "Expected: Error message shown; URL stays on /login",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:31:38",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Enter a valid username and an invalid password",
+        "expected": ""
+      },
+      {
+        "step": "Click the terms checkbox",
+        "expected": ""
+      },
+      {
+        "step": "Click Sign In",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "12.12s"
+    ],
+    "id": "id_1776417393470_8hj4w8c"
+  },
+  {
+    "title": "test_tc04_both_fields_empty",
+    "description": "Expected: Submit button disabled or form blocked; URL stays on /login",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:31:50",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Leave username and password fields empty",
+        "expected": ""
+      },
+      {
+        "step": "Click Sign In",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "8.75s"
+    ],
+    "id": "id_1776417393471_p0lb30e"
+  },
+  {
+    "title": "test_tc05_username_empty",
+    "description": "Expected: Submit button disabled or form blocked; URL stays on /login",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:31:59",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Leave username empty, enter a valid password",
+        "expected": ""
+      },
+      {
+        "step": "Click Sign In",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "8.85s"
+    ],
+    "id": "id_1776417393474_odttrt8"
+  },
+  {
+    "title": "test_tc06_password_empty",
+    "description": "Expected: Submit button disabled or form blocked; URL stays on /login",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:39:04",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Enter a valid username, leave password empty",
+        "expected": ""
+      },
+      {
+        "step": "Click Sign In",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "9.93s"
+    ],
+    "id": "id_1776417393478_05q9ebw"
+  },
+  {
+    "title": "test_tc07_page_elements_visible",
+    "description": "Expected: Username field, password field, and submit button all visible",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:39:13",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Verify username field is visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify password field is visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify Sign In button is visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "0.93s"
+    ],
+    "id": "id_1776417393481_2d4byxb"
+  },
+  {
+    "title": "test_tc08_checkbox_toggle",
+    "description": "Expected: Checkbox is visible and toggles without error",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:39:15",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Verify the terms checkbox is visible",
+        "expected": ""
+      },
+      {
+        "step": "Click the checkbox",
+        "expected": ""
+      },
+      {
+        "step": "Verify no error appears",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "2.19s"
+    ],
+    "id": "id_1776417393482_e64dcm9"
+  },
+  {
+    "title": "test_tc22_login_page_ui_elements",
+    "description": "Expected: All login page UI elements are present and correctly labeled",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:39:17",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Verify 'Sign In' heading is displayed",
+        "expected": ""
+      },
+      {
+        "step": "Verify 'Welcome back to your Dealership Dashboard' sub-heading",
+        "expected": ""
+      },
+      {
+        "step": "Verify username and password fields have placeholder text",
+        "expected": ""
+      },
+      {
+        "step": "Verify terms/EULA checkbox text is visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify 'Forgot password?' link is visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "0.87s"
+    ],
+    "id": "id_1776417393483_pbojkx6"
+  },
+  {
+    "title": "test_tc23_combined_validation",
+    "description": "Expected: Form blocks submission at each step until both fields are filled",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:39:18",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Enter invalid username, leave password empty, click Sign In",
+        "expected": ""
+      },
+      {
+        "step": "Verify form is blocked (submit disabled or stays on login)",
+        "expected": ""
+      },
+      {
+        "step": "Enter valid username, leave password empty, click Sign In",
+        "expected": ""
+      },
+      {
+        "step": "Verify form is still blocked",
+        "expected": ""
+      },
+      {
+        "step": "Enter valid password → both fields pass validation",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "2.28s"
+    ],
+    "id": "id_1776417393484_8wwguwu"
+  },
+  {
+    "title": "test_tc24_password_visibility_toggle",
+    "description": "Expected: Password toggles between masked and visible on eye icon clicks",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:39:20",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Enter a password",
+        "expected": ""
+      },
+      {
+        "step": "Verify input type is 'password' (masked)",
+        "expected": ""
+      },
+      {
+        "step": "Click the eye icon",
+        "expected": ""
+      },
+      {
+        "step": "Verify input type changes to 'text' (visible)",
+        "expected": ""
+      },
+      {
+        "step": "Click the eye icon again",
+        "expected": ""
+      },
+      {
+        "step": "Verify input type returns to 'password' (masked)",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "1.53s"
+    ],
+    "id": "id_1776417393486_4lie2do"
+  },
+  {
+    "title": "test_tc25_forgot_password_link",
+    "description": "Expected: Forgot password link is visible and triggers navigation when clicked",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:39:21",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL",
+        "expected": ""
+      },
+      {
+        "step": "Verify 'Forgot password?' link is visible",
+        "expected": ""
+      },
+      {
+        "step": "Click the link",
+        "expected": ""
+      },
+      {
+        "step": "Verify navigation or popup occurs",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "4.19s"
+    ],
+    "id": "id_1776417393487_6ghv32v"
+  },
+  {
+    "title": "test_tc26_responsiveness",
+    "description": "Expected: Login form elements remain visible at all viewport sizes",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:39:25",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Login",
+    "steps": [
+      {
+        "step": "Open login URL at desktop viewport (1920x1080)",
+        "expected": ""
+      },
+      {
+        "step": "Verify login form elements visible",
+        "expected": ""
+      },
+      {
+        "step": "Resize to tablet viewport (768x1024)",
+        "expected": ""
+      },
+      {
+        "step": "Verify login form elements still visible",
+        "expected": ""
+      },
+      {
+        "step": "Resize to mobile viewport (375x667)",
+        "expected": ""
+      },
+      {
+        "step": "Verify login form elements still visible",
+        "expected": ""
+      },
+      {
+        "step": "Resize to landscape mobile (667x375)",
+        "expected": ""
+      },
+      {
+        "step": "Verify login form elements still visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "2.97s"
+    ],
+    "id": "id_1776417393488_d0buu17"
+  },
+  {
+    "title": "test_tc14_home_page_loads",
+    "description": "Expected: Home page at /kingdom/home loads with MY DEALERSHIPS, GROUPS, DAILY UPDATES sections",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:33:24",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Home Page",
+    "steps": [
+      {
+        "step": "Login with valid credentials",
+        "expected": ""
+      },
+      {
+        "step": "Select DP View on /select page",
+        "expected": ""
+      },
+      {
+        "step": "Search and select KEN GARFF AUTOMOTIVE GROUP",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL is /kingdom/home",
+        "expected": ""
+      },
+      {
+        "step": "Verify MY DEALERSHIPS section is visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify GROUPS section is visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify DAILY UPDATES section is visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "13.66s"
+    ],
+    "id": "id_1776417393496_90ltq3d"
+  },
+  {
+    "title": "test_tc15_home_page_ui_layout",
+    "description": "Expected: Nav bar: My Dealerships, Single Dealership, Groups, View As, HOW IT WORKS, CONTACT US visible. CTAs: SEE MY DEALERSHIPS, OTHER GROUPS, VIEW FULL ANALYSIS visible",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:33:37",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Home Page",
+    "steps": [
+      {
+        "step": "Navigate to Home Page (Login → DP View → group)",
+        "expected": ""
+      },
+      {
+        "step": "Verify nav links: My Dealerships, Single Dealership, Groups, View As",
+        "expected": ""
+      },
+      {
+        "step": "Verify HOW IT WORKS button visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify CONTACT US button visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify CTA: SEE MY DEALERSHIPS visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify CTA: OTHER GROUPS visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify CTA: VIEW FULL ANALYSIS visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "13.72s"
+    ],
+    "id": "id_1776417393496_o1lnezz"
+  },
+  {
+    "title": "test_tc16_cta_see_my_dealerships",
+    "description": "Expected: Clicking SEE MY DEALERSHIPS redirects away from home page",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:33:51",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Home Page",
+    "steps": [
+      {
+        "step": "Navigate to Home Page",
+        "expected": ""
+      },
+      {
+        "step": "Click the SEE MY DEALERSHIPS CTA button",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL changes away from home page",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "15.27s"
+    ],
+    "id": "id_1776417393497_nw9wxw1"
+  },
+  {
+    "title": "test_tc17_cta_other_groups",
+    "description": "Expected: Clicking OTHER GROUPS redirects away from home page",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:34:06",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Home Page",
+    "steps": [
+      {
+        "step": "Navigate to Home Page",
+        "expected": ""
+      },
+      {
+        "step": "Click the OTHER GROUPS CTA button",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL changes away from home page",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "15.73s"
+    ],
+    "id": "id_1776417393498_twys00g"
+  },
+  {
+    "title": "test_tc18_cta_view_full_analysis",
+    "description": "Expected: VIEW FULL ANALYSIS CTA is clickable and triggers navigation or content change",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:34:22",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Home Page",
+    "steps": [
+      {
+        "step": "Navigate to Home Page",
+        "expected": ""
+      },
+      {
+        "step": "Scroll down to VIEW FULL ANALYSIS CTA button",
+        "expected": ""
+      },
+      {
+        "step": "Click the button",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL changes or new content appears",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "20.34s"
+    ],
+    "id": "id_1776417393499_g4e1zhc"
+  },
+  {
+    "title": "test_tc19_logout_flow",
+    "description": "Expected: User dropdown opens; clicking Logout redirects to /login",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:34:43",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Home Page",
+    "steps": [
+      {
+        "step": "Navigate to Home Page",
+        "expected": ""
+      },
+      {
+        "step": "Click the user avatar (BM) in top-right corner",
+        "expected": ""
+      },
+      {
+        "step": "Verify dropdown opens with Profile, Admin Panel, Logout",
+        "expected": ""
+      },
+      {
+        "step": "Click Logout",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL redirects to /login",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "16.64s"
+    ],
+    "id": "id_1776417393500_qbyfoel"
+  },
+  {
+    "title": "test_tc20_back_button_returns_to_home",
+    "description": "Expected: After navigating away, browser back returns to home page",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:34:59",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Home Page",
+    "steps": [
+      {
+        "step": "Navigate to Home Page",
+        "expected": ""
+      },
+      {
+        "step": "Click SEE MY DEALERSHIPS CTA to navigate away",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL changed",
+        "expected": ""
+      },
+      {
+        "step": "Press browser back button",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL returns to /kingdom/home",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "17.18s"
+    ],
+    "id": "id_1776417393501_sc9s5rz"
+  },
+  {
+    "title": "test_tc21_how_it_works",
+    "description": "Expected: Clicking HOW IT WORKS opens the How it Works page",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:35:16",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Home Page",
+    "steps": [
+      {
+        "step": "Navigate to Home Page",
+        "expected": ""
+      },
+      {
+        "step": "Click the HOW IT WORKS button in the nav bar",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL changes to How it Works page",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "15.1s"
+    ],
+    "id": "id_1776417393502_e84klxl"
+  },
+  {
+    "title": "test_tc30_my_dealerships_loads",
+    "description": "Expected: My Dealerships page loads with valuation and momentum data",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:40:18",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Login with valid credentials",
+        "expected": ""
+      },
+      {
+        "step": "Select DP View → choose KEN GARFF AUTOMOTIVE GROUP",
+        "expected": ""
+      },
+      {
+        "step": "Click My Dealerships in nav bar",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL contains /kingdom/view?tab=dealerships",
+        "expected": ""
+      },
+      {
+        "step": "Verify valuation and momentum sections are visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "79.45s"
+    ],
+    "id": "id_1776417393502_jovv0tp"
+  },
+  {
+    "title": "test_tc31_unauthorized_redirects",
+    "description": "Expected: Unauthorized access to My Dealerships redirects to /login",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:41:57",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Open a new browser with no session/cookies",
+        "expected": ""
+      },
+      {
+        "step": "Navigate directly to My Dealerships URL",
+        "expected": ""
+      },
+      {
+        "step": "Wait for React SPA redirect",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL contains /login",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "0.95s"
+    ],
+    "id": "id_1776417393503_898wgk9"
+  },
+  {
+    "title": "test_tc32_direct_url_access",
+    "description": "Expected: Direct URL access loads My Dealerships page without errors",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:42:00",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Login and navigate to home page",
+        "expected": ""
+      },
+      {
+        "step": "Paste My Dealerships URL directly into browser",
+        "expected": ""
+      },
+      {
+        "step": "Verify page loads correctly",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "23.32s"
+    ],
+    "id": "id_1776417393504_z3q2vtd"
+  },
+  {
+    "title": "test_tc33_invalid_group_id",
+    "description": "Expected: System handles invalid/missing groupId gracefully (error, redirect, or auto-correct)",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:42:21",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Login to the application",
+        "expected": ""
+      },
+      {
+        "step": "Navigate to My Dealerships URL with invalid groupId=999999",
+        "expected": ""
+      },
+      {
+        "step": "Verify error/fallback/redirect is shown or data is empty",
+        "expected": ""
+      },
+      {
+        "step": "Navigate to My Dealerships URL with no groupId",
+        "expected": ""
+      },
+      {
+        "step": "Verify error/fallback/redirect is shown or data is empty",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "52.7s"
+    ],
+    "id": "id_1776417393505_06xdvlp"
+  },
+  {
+    "title": "test_tc34_logo_redirects_to_home",
+    "description": "Expected: Clicking JumpIQ logo redirects to Home/Dashboard page",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:43:16",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Click the JumpIQ logo in the header",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL navigates to /kingdom/home",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "18.82s"
+    ],
+    "id": "id_1776417393506_94tme62"
+  },
+  {
+    "title": "test_tc35_tab_highlighted",
+    "description": "Expected: My Dealerships tab has active/highlighted styling in the nav bar",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:43:36",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Check nav bar for My Dealerships button",
+        "expected": ""
+      },
+      {
+        "step": "Verify it has active styling (underline, bright text, or border)",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "16.88s"
+    ],
+    "id": "id_1776417393506_k4es1wm"
+  },
+  {
+    "title": "test_tc36_nav_to_groups",
+    "description": "Expected: Clicking Groups nav navigates away from My Dealerships",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:43:52",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Click 'Groups' in the header nav bar",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL changes away from My Dealerships",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "18.38s"
+    ],
+    "id": "id_1776417393507_nf63d7d"
+  },
+  {
+    "title": "test_tc37_nav_to_single_dealership",
+    "description": "Expected: Clicking Single Dealership nav navigates or opens dealership selector",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:44:10",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Click 'Single Dealership' in the header nav bar",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL changes or dealership selection appears",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "23.61s"
+    ],
+    "id": "id_1776417393507_h5pbkvi"
+  },
+  {
+    "title": "test_tc38_view_as_option",
+    "description": "Expected: View As option navigates to view selection page",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:44:34",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Click 'View As' in the header nav bar",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL changes or view selector appears",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "18.42s"
+    ],
+    "id": "id_1776417393508_bbwnyj7"
+  },
+  {
+    "title": "test_tc39_valuation_range_displayed",
+    "description": "Expected: Group Valuation section visible with dollar range (e.g. $2.64B – $3.33B)",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:44:52",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate EST. TOTAL GROUP VALUATION section",
+        "expected": ""
+      },
+      {
+        "step": "Verify section is visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify valuation range contains dollar amounts",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "43.45s"
+    ],
+    "id": "id_1776417393509_hm3ac5w"
+  },
+  {
+    "title": "test_tc40_valuation_30d_change",
+    "description": "Expected: Last 30 days valuation change % is visible with Negative/Neutral/Positive badges",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:45:40",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate the 'last 30 days' valuation change indicator",
+        "expected": ""
+      },
+      {
+        "step": "Verify percentage text is visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify Negative/Neutral/Positive badges are visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "46.9s"
+    ],
+    "id": "id_1776417393510_q1l07ii"
+  },
+  {
+    "title": "test_tc41_valuation_long_term_change",
+    "description": "Expected: Long-term valuation change % (last N months) is visible",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:46:27",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate the long-term valuation change (e.g. 'last 11 months')",
+        "expected": ""
+      },
+      {
+        "step": "Verify percentage text is visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "18.38s"
+    ],
+    "id": "id_1776417393511_8vpgpz9"
+  },
+  {
+    "title": "test_tc42_momentum_value_displayed",
+    "description": "Expected: Group Momentum section visible with a numeric value (e.g. 77.3)",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:46:43",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate GROUP MOMENTUM section",
+        "expected": ""
+      },
+      {
+        "step": "Verify section is visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify a numeric momentum value is displayed",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "46.77s"
+    ],
+    "id": "id_1776417393511_yrg1d0x"
+  },
+  {
+    "title": "test_tc43_momentum_30d_change",
+    "description": "Expected: Momentum 30-day % visible with Low/Medium/High badges",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:47:30",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate GROUP MOMENTUM section",
+        "expected": ""
+      },
+      {
+        "step": "Verify 'last 30 days' percentage is visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify Low/Medium/High momentum badges are visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "48.28s"
+    ],
+    "id": "id_1776417393512_3nvzqzg"
+  },
+  {
+    "title": "test_tc44_valuation_badge_counts",
+    "description": "Expected: All three valuation badge counts are visible with numeric values",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:48:17",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate EST. VALUATION CHANGE (3 mo) section",
+        "expected": ""
+      },
+      {
+        "step": "Verify Negative, Neutral, Positive counts are displayed and non-negative",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "17.5s"
+    ],
+    "id": "id_1776417393513_e8bfrx9"
+  },
+  {
+    "title": "test_tc45_momentum_badge_counts",
+    "description": "Expected: All three momentum badge counts are visible with numeric values",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:48:33",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate MOMENTUM (3 mo) section",
+        "expected": ""
+      },
+      {
+        "step": "Verify Low, Medium, High counts are displayed",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "16.68s"
+    ],
+    "id": "id_1776417393514_rkqzh5i"
+  },
+  {
+    "title": "test_tc46_badge_color_coding",
+    "description": "Expected: Badges have color coding applied (different colors for different categories)",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:48:50",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate valuation badges (Negative/Neutral/Positive)",
+        "expected": ""
+      },
+      {
+        "step": "Locate momentum badges (Low/Medium/High)",
+        "expected": ""
+      },
+      {
+        "step": "Verify each badge has a distinct background color",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "16.88s"
+    ],
+    "id": "id_1776417393515_w5sk17k"
+  },
+  {
+    "title": "test_tc47_brand_filter_loads",
+    "description": "Expected: Brand filter shows multiple brand chips",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:49:09",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate brand filter chips",
+        "expected": ""
+      },
+      {
+        "step": "Verify multiple brand names are displayed (Audi, BMW, Buick, etc.)",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "18.55s"
+    ],
+    "id": "id_1776417393515_1ogytr5"
+  },
+  {
+    "title": "test_tc48_dealership_filter_loads",
+    "description": "Expected: Dealership filter shows dealership name chips",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:44:17",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate dealership filter chips",
+        "expected": ""
+      },
+      {
+        "step": "Verify dealership names are displayed",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "17.1s"
+    ],
+    "id": "id_1776417393516_u5ms57x"
+  },
+  {
+    "title": "test_tc49_filter_by_brand",
+    "description": "Expected: Removing a brand chip updates the filter (one fewer chip)",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:44:34",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Note current brand chips",
+        "expected": ""
+      },
+      {
+        "step": "Remove one brand chip by clicking its X",
+        "expected": ""
+      },
+      {
+        "step": "Verify the brand was removed from the filter",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "18.4s"
+    ],
+    "id": "id_1776417393517_0ojjg0b"
+  },
+  {
+    "title": "test_tc50_search_icon_visible",
+    "description": "Expected: Search icon is visible on the page",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:44:53",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate the search icon near the filter chips",
+        "expected": ""
+      },
+      {
+        "step": "Verify it is visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "17.53s"
+    ],
+    "id": "id_1776417393518_46gr3n8"
+  },
+  {
+    "title": "test_tc51_clear_filters",
+    "description": "Expected: CLEAR button restores all brand chips to default",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:45:10",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Remove a brand chip to create filtered state",
+        "expected": ""
+      },
+      {
+        "step": "Click CLEAR button",
+        "expected": ""
+      },
+      {
+        "step": "Verify filters are reset (all brands restored)",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "47.97s"
+    ],
+    "id": "id_1776417393519_hgotga5"
+  },
+  {
+    "title": "test_tc52_map_view_displayed",
+    "description": "Expected: Map View loads and displays the map",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:45:58",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Click Map View tab",
+        "expected": ""
+      },
+      {
+        "step": "Verify map is displayed",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "46.98s"
+    ],
+    "id": "id_1776417393519_0y3lq4h"
+  },
+  {
+    "title": "test_tc53_map_pins_visible",
+    "description": "Expected: Dealership pins/markers are displayed on the map",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:46:45",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Switch to Map View",
+        "expected": ""
+      },
+      {
+        "step": "Verify map pins/markers are visible on the map",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "47.09s"
+    ],
+    "id": "id_1776417393521_6do76qc"
+  },
+  {
+    "title": "test_tc54_zoom_controls",
+    "description": "Expected: Zoom controls visible and clickable without errors",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:47:32",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page → Map View",
+        "expected": ""
+      },
+      {
+        "step": "Verify +/- zoom controls are visible",
+        "expected": ""
+      },
+      {
+        "step": "Click zoom in then zoom out",
+        "expected": ""
+      },
+      {
+        "step": "Verify map responds without errors",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "108.32s"
+    ],
+    "id": "id_1776417393521_fcvxmjc"
+  },
+  {
+    "title": "test_tc55_momentum_legend",
+    "description": "Expected: Momentum legend with color bar and 60-100 range is visible",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:49:21",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page → Map View",
+        "expected": ""
+      },
+      {
+        "step": "Locate the Momentum (3 mo) legend",
+        "expected": ""
+      },
+      {
+        "step": "Verify legend is visible with 60-100 range",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "46.93s"
+    ],
+    "id": "id_1776417393522_zimsk8d"
+  },
+  {
+    "title": "test_tc56_view_by_default_momentum",
+    "description": "Expected: View By dropdown shows 'Momentum' as default",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:50:08",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Locate the 'View by' dropdown",
+        "expected": ""
+      },
+      {
+        "step": "Verify default value is 'Momentum'",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "17.49s"
+    ],
+    "id": "id_1776417393523_jcij4u2"
+  },
+  {
+    "title": "test_tc57_switch_to_analysis",
+    "description": "Expected: Switching to Analysis View shows table/data content",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:50:25",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Click Map View",
+        "expected": ""
+      },
+      {
+        "step": "Click Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Verify Analysis View loads with table data",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "77.97s"
+    ],
+    "id": "id_1776417393524_81eiadd"
+  },
+  {
+    "title": "test_tc58_analysis_view_data",
+    "description": "Expected: Analysis View shows Superstars section with data rows",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:51:43",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Verify Superstars and Stragglers section visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify table has data rows",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "48.81s"
+    ],
+    "id": "id_1776417393524_v8wy08q"
+  },
+  {
+    "title": "test_tc59_superstars_section",
+    "description": "Expected: Superstars and Stragglers section is displayed",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:52:32",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Scroll to Superstars and Stragglers",
+        "expected": ""
+      },
+      {
+        "step": "Verify section heading and layout visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "49.75s"
+    ],
+    "id": "id_1776417393525_i42t1ie"
+  },
+  {
+    "title": "test_tc60_table_headers",
+    "description": "Expected: Table has all expected column headers",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:53:22",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Locate Superstars table",
+        "expected": ""
+      },
+      {
+        "step": "Verify column headers: DEALERSHIP, EST. VALUATION CHANGE, MOMENTUM, USED, NEW, USED TO NEW, EST. REVENUE, EST. JUMPIQ BLUE SKY",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "48.82s"
+    ],
+    "id": "id_1776417393530_wd9wgk7"
+  },
+  {
+    "title": "test_tc61_sortable_columns",
+    "description": "Expected: Table has multiple sortable columns with sort icons",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T11:54:11",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Locate Superstars table header row",
+        "expected": ""
+      },
+      {
+        "step": "Verify column headers have sort icons/indicators",
+        "expected": ""
+      },
+      {
+        "step": "Verify multiple columns are sortable",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "49.03s"
+    ],
+    "id": "id_1776417393533_e2m1qcs"
+  },
+  {
+    "title": "test_tc62_dealership_click_navigates",
+    "description": "Expected: Clicking a dealership name navigates to its detail page",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:49:26",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Click on dealership name 'KEN GARFF KIA AVONDALEAVONDALE, AZDetailed view' in the table",
+        "expected": ""
+      },
+      {
+        "step": "Verify URL changes to Detailed Dealership View",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "51.81s"
+    ],
+    "id": "id_1776417393535_swgvcew"
+  },
+  {
+    "title": "test_tc63_valuation_format",
+    "description": "Expected: Valuation column shows dollar-range format (e.g. $11.79M – $15.16M)",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:50:18",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Locate valuation column in Superstars table",
+        "expected": ""
+      },
+      {
+        "step": "Verify values use $X.XXM – $X.XXM format",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "48.84s"
+    ],
+    "id": "id_1776417393537_wa8uqwg"
+  },
+  {
+    "title": "test_tc64_momentum_trend_arrows",
+    "description": "Expected: Table shows MoM trend percentages with direction indicators",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:51:07",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Locate momentum column in Superstars table",
+        "expected": ""
+      },
+      {
+        "step": "Verify MoM % trend indicators are shown (e.g. +5.40% MoM)",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "48.94s"
+    ],
+    "id": "id_1776417393540_p6143bg"
+  },
+  {
+    "title": "test_tc65_detailed_view_links",
+    "description": "Expected: 'Detailed view' links are present in the table rows",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:51:56",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Check table rows for 'Detailed view' links",
+        "expected": ""
+      },
+      {
+        "step": "Verify links are present",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "49.34s"
+    ],
+    "id": "id_1776417393541_18pe0s6"
+  },
+  {
+    "title": "test_tc66_map_pin_elements",
+    "description": "Expected: Map contains dealership pin elements",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:52:45",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Map View",
+        "expected": ""
+      },
+      {
+        "step": "Wait for map to fully load",
+        "expected": ""
+      },
+      {
+        "step": "Verify pin/marker elements exist in the DOM",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "49.02s"
+    ],
+    "id": "id_1776417393542_j05si6k"
+  },
+  {
+    "title": "test_tc67_legend_color_bar",
+    "description": "Expected: Legend color bar visible with 60-100 threshold labels",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:53:34",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Map View",
+        "expected": ""
+      },
+      {
+        "step": "Locate momentum legend color bar",
+        "expected": ""
+      },
+      {
+        "step": "Verify legend shows 'Momentum (3 mo)' with 60 and 100 thresholds",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "46.73s"
+    ],
+    "id": "id_1776417393544_vszvrd1"
+  },
+  {
+    "title": "test_tc68_badge_count_sum",
+    "description": "Expected: Valuation and momentum badge count sums are positive and equal",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:54:21",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Read Negative + Neutral + Positive counts",
+        "expected": ""
+      },
+      {
+        "step": "Read Low + Medium + High counts",
+        "expected": ""
+      },
+      {
+        "step": "Verify both sums are > 0 and both sums match (same total dealerships)",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "18.37s"
+    ],
+    "id": "id_1776417393545_3gt0j3o"
+  },
+  {
+    "title": "test_tc69_analysis_sections_visible",
+    "description": "Expected: Analysis View displays Superstars section with table headers and data",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:54:39",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Verify Superstars section visible",
+        "expected": ""
+      },
+      {
+        "step": "Verify table has headers",
+        "expected": ""
+      },
+      {
+        "step": "Verify table has data rows",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "48.68s"
+    ],
+    "id": "id_1776417393546_h3pzx5k"
+  },
+  {
+    "title": "test_tc70_analysis_scroll",
+    "description": "Expected: Table is scrollable with data rows remaining visible after scroll",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:55:28",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships Extended",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Note initial row count",
+        "expected": ""
+      },
+      {
+        "step": "Scroll down in the table",
+        "expected": ""
+      },
+      {
+        "step": "Verify table is scrollable and data remains visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "50.16s"
+    ],
+    "id": "id_1776417393548_04btlq0"
+  },
+  {
+    "title": "test_tc71_view_by_visible",
+    "description": "Expected: View By dropdown is visible on the page",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:56:19",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Verify 'View by' dropdown is visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "16.74s"
+    ],
+    "id": "id_1776417393552_r4i2ix9"
+  },
+  {
+    "title": "test_tc72_view_by_opens",
+    "description": "Expected: View By dropdown opens on click",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:02:08",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Click View By dropdown",
+        "expected": ""
+      },
+      {
+        "step": "Verify dropdown opens",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "18.44s"
+    ],
+    "id": "id_1776417393553_ixqch01"
+  },
+  {
+    "title": "test_tc73_dropdown_options",
+    "description": "Expected: View By dropdown exists with Momentum as current option",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:02:27",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Verify 'View by' dropdown is present with 'Momentum' as current value",
+        "expected": ""
+      },
+      {
+        "step": "Verify dropdown control exists (proven functional by TC-75 switching test)",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "17.32s"
+    ],
+    "id": "id_1776417393554_5sdy0gi"
+  },
+  {
+    "title": "test_tc74_selected_option_active",
+    "description": "Expected: Selected option is displayed as the active dropdown value",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:02:44",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Check View By dropdown value",
+        "expected": ""
+      },
+      {
+        "step": "Verify selected value is shown as active text",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "19.51s"
+    ],
+    "id": "id_1776417393555_6dm64z5"
+  },
+  {
+    "title": "test_tc75_valuation_change_updates",
+    "description": "Expected: Selecting Valuation Change updates the map legend and data",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:03:04",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Map View",
+        "expected": ""
+      },
+      {
+        "step": "Note legend content",
+        "expected": ""
+      },
+      {
+        "step": "Open View By dropdown and select 'Valuation Change'",
+        "expected": ""
+      },
+      {
+        "step": "Verify legend/data updates",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "51.11s"
+    ],
+    "id": "id_1776417393556_drbn3vj"
+  },
+  {
+    "title": "test_tc76_view_by_preserves_filters",
+    "description": "Expected: Filters persist after switching View By",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:03:55",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Remove a brand filter chip",
+        "expected": ""
+      },
+      {
+        "step": "Switch View By option",
+        "expected": ""
+      },
+      {
+        "step": "Verify brand filters are still applied",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "81.86s"
+    ],
+    "id": "id_1776417393558_phf3ev6"
+  },
+  {
+    "title": "test_tc77_view_by_refresh_resets",
+    "description": "Expected: View By defaults back to Momentum after page refresh",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:05:16",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Refresh the page",
+        "expected": ""
+      },
+      {
+        "step": "Verify View By resets to 'Momentum'",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "20.56s"
+    ],
+    "id": "id_1776417393558_ht7e78q"
+  },
+  {
+    "title": "test_tc78_rapid_switch_no_break",
+    "description": "Expected: No UI break after rapid View By switches",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:05:37",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Rapidly switch View By between Momentum and Valuation 3 times",
+        "expected": ""
+      },
+      {
+        "step": "Verify page is still functional",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "382.03s"
+    ],
+    "id": "id_1776417393559_85zo4g0"
+  },
+  {
+    "title": "test_tc79_view_more",
+    "description": "Expected: View More loads additional records, or all records are already displayed",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:11:59",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis View",
+        "expected": ""
+      },
+      {
+        "step": "Note row count",
+        "expected": ""
+      },
+      {
+        "step": "Look for 'View More' / 'Full Leaderboard' button",
+        "expected": ""
+      },
+      {
+        "step": "If found, click and verify more rows. If not, all data is already shown.",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "48.9s"
+    ],
+    "id": "id_1776417393560_3g2qmyc"
+  },
+  {
+    "title": "test_tc80_responsiveness",
+    "description": "Expected: Page content visible at all resolutions",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:56:36",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Resize to desktop (1920x1080), laptop (1366x768), tablet (768x1024)",
+        "expected": ""
+      },
+      {
+        "step": "Verify page content remains visible at each resolution",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "18.67s"
+    ],
+    "id": "id_1776417393561_o735lry"
+  },
+  {
+    "title": "test_tc81_mobile_tablet",
+    "description": "Expected: Page adapts and renders on mobile and tablet viewports",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:56:54",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Resize to mobile (375x667) and tablet (768x1024)",
+        "expected": ""
+      },
+      {
+        "step": "Verify page renders content without breaking",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "19.61s"
+    ],
+    "id": "id_1776417393562_74bjdj1"
+  },
+  {
+    "title": "test_tc82_keyboard_navigation",
+    "description": "Expected: Tab key moves focus sequentially across interactive elements",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:57:13",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Press Tab key 3 times",
+        "expected": ""
+      },
+      {
+        "step": "Verify focus moves between elements",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "17.68s"
+    ],
+    "id": "id_1776417393563_3dykz85"
+  },
+  {
+    "title": "test_tc83_focus_state",
+    "description": "Expected: Focused element shows visible focus indicator",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:57:31",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "My Dealerships View By",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships page",
+        "expected": ""
+      },
+      {
+        "step": "Press Tab to move focus to first element",
+        "expected": ""
+      },
+      {
+        "step": "Verify focus indicator (outline/ring) is visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "16.89s"
+    ],
+    "id": "id_1776417393564_ziqg4ok"
+  },
+  {
+    "title": "test_tc84_analytics_loads",
+    "description": "Expected: Analytics View loads with chart content visible",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:57:47",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Navigate to My Dealerships → Analysis tab",
+        "expected": ""
+      },
+      {
+        "step": "Verify Analytics View loads",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "20.29s"
+    ],
+    "id": "id_1776417393565_tzlrxen"
+  },
+  {
+    "title": "test_tc85_group_name",
+    "description": "Expected: Dealership group name 'KEN GARFF' is displayed",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:58:07",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Navigate to Analytics View",
+        "expected": ""
+      },
+      {
+        "step": "Verify 'KEN GARFF' group name is visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "21.54s"
+    ],
+    "id": "id_1776417393566_1ejkwmy"
+  },
+  {
+    "title": "test_tc86_summary_metrics_persist",
+    "description": "Expected: Summary metrics remain unchanged between views",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:58:27",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Note summary metrics in Analytics View",
+        "expected": ""
+      },
+      {
+        "step": "Switch to Map View",
+        "expected": ""
+      },
+      {
+        "step": "Compare summary metrics",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "24.67s"
+    ],
+    "id": "id_1776417393567_wsswnkx"
+  },
+  {
+    "title": "test_tc87_default_time_range",
+    "description": "Expected: Time range selector is visible with a default value selected",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:58:49",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Navigate to Analytics View",
+        "expected": ""
+      },
+      {
+        "step": "Check default time range selection",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "19.15s"
+    ],
+    "id": "id_1776417393568_oge35im"
+  },
+  {
+    "title": "test_tc88_time_range_switching",
+    "description": "Expected: Switching time ranges updates the chart data",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T15:59:09",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Navigate to Analytics View (12M default)",
+        "expected": ""
+      },
+      {
+        "step": "Switch to 3M → note chart",
+        "expected": ""
+      },
+      {
+        "step": "Switch to 6M → note chart",
+        "expected": ""
+      },
+      {
+        "step": "Verify chart content changes",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "81.25s"
+    ],
+    "id": "id_1776417393569_4ag88hh"
+  },
+  {
+    "title": "test_tc89_default_metric_valuation",
+    "description": "Expected: Default metric is 'Valuation'",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:00:29",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Navigate to Analytics View",
+        "expected": ""
+      },
+      {
+        "step": "Check default metric selection",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "19.98s"
+    ],
+    "id": "id_1776417393570_g7wcunp"
+  },
+  {
+    "title": "test_tc90_metric_switching",
+    "description": "Expected: Both metric tabs exist; clicking Momentum updates the chart",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:00:49",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Navigate to Analytics View",
+        "expected": ""
+      },
+      {
+        "step": "Verify both Valuation and Momentum metric tabs exist",
+        "expected": ""
+      },
+      {
+        "step": "Click Momentum tab",
+        "expected": ""
+      },
+      {
+        "step": "Verify chart Y-axis changes to 'Momentum Score'",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "22.19s"
+    ],
+    "id": "id_1776417393570_c9zcawp"
+  },
+  {
+    "title": "test_tc91_trend_chart_yaxis",
+    "description": "Expected: Trend line chart renders with Y-axis label (EST. Valuation or Momentum Score)",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:01:11",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Navigate to Analytics View",
+        "expected": ""
+      },
+      {
+        "step": "Verify trend chart and Y-axis label visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "19.7s"
+    ],
+    "id": "id_1776417393571_zdxcibq"
+  },
+  {
+    "title": "test_tc92_xaxis_labels",
+    "description": "Expected: X-axis shows 'Time Period' label",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:01:33",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Navigate to Analytics View",
+        "expected": ""
+      },
+      {
+        "step": "Verify X-axis 'Time Period' label visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "20.64s"
+    ],
+    "id": "id_1776417393572_ntgekl0"
+  },
+  {
+    "title": "test_tc93_dealership_lines",
+    "description": "Expected: Multiple dealership trend lines are displayed",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:01:52",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Navigate to Analytics View",
+        "expected": ""
+      },
+      {
+        "step": "Verify multiple dealership names appear as chart legends",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "20.44s"
+    ],
+    "id": "id_1776417393573_0dk52zl"
+  },
+  {
+    "title": "test_tc94_scatter_chart",
+    "description": "Expected: Scatter chart is displayed",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:02:14",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Navigate to Analytics View",
+        "expected": ""
+      },
+      {
+        "step": "Verify 'Momentum vs Environment' scatter chart visible",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "20.54s"
+    ],
+    "id": "id_1776417393574_ec7jioo"
+  },
+  {
+    "title": "test_tc95_quadrant_labels",
+    "description": "Expected: All four quadrant labels are visible",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:02:34",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [
+      {
+        "step": "Navigate to Analytics View",
+        "expected": ""
+      },
+      {
+        "step": "Verify quadrant labels: Overachievers, Champions, Stragglers, Opportunities",
+        "expected": ""
+      }
+    ],
+    "tags": [
+      "21.74s"
+    ],
+    "id": "id_1776417393575_e6vjrjx"
+  },
+  {
+    "title": "test_tc96_scatter_axes",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:02:55",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "54.44s"
+    ],
+    "id": "id_1776417393575_5qqwfvi"
+  },
+  {
+    "title": "test_tc97_trend_vectors_toggle",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:03:16",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "56.2s"
+    ],
+    "id": "id_1776417393576_s5w753o"
+  },
+  {
+    "title": "test_tc98_toggle_trend_vectors",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:21:04",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "55.16s"
+    ],
+    "id": "id_1776417393577_ed5k1ll"
+  },
+  {
+    "title": "test_tc99_reset_zoom",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:03:37",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "55.58s"
+    ],
+    "id": "id_1776417393578_igx3rm7"
+  },
+  {
+    "title": "test_tc100_tab_switch_stability",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:22:54",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "55.09s"
+    ],
+    "id": "id_1776417393579_7xse491"
+  },
+  {
+    "title": "test_tc101_view_switch_retains_state",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:03:57",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "54.51s"
+    ],
+    "id": "id_1776417393581_7pxlz2l"
+  },
+  {
+    "title": "test_tc102_analytics_brand_filter",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:04:22",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "53.97s"
+    ],
+    "id": "id_1776417393582_xyt30fy"
+  },
+  {
+    "title": "test_tc103_chart_responsiveness",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:25:38",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "54.49s"
+    ],
+    "id": "id_1776417393583_171f9vv"
+  },
+  {
+    "title": "test_tc104_keyboard_nav",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:04:44",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "124.1s"
+    ],
+    "id": "id_1776417393583_kpj68yz"
+  },
+  {
+    "title": "test_tc105_trending_analysis_visible",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:28:37",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "54.87s"
+    ],
+    "id": "id_1776417393584_99twqnm"
+  },
+  {
+    "title": "test_tc106_ai_insights_text",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:05:04",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "55.27s"
+    ],
+    "id": "id_1776417393586_zwlu2pv"
+  },
+  {
+    "title": "test_tc107_insight_nav_arrows",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:30:27",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "1061.28s"
+    ],
+    "id": "id_1776417393587_e0d40kx"
+  },
+  {
+    "title": "test_tc108_insight_content_changes",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T16:05:25",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Analytics View",
+    "steps": [],
+    "tags": [
+      "0.15s"
+    ],
+    "id": "id_1776417393587_olqky4m"
+  },
+  {
+    "title": "test_tc27_cancel_add_user_popup",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:08",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Profile",
+    "steps": [],
+    "tags": [
+      "0.21s"
+    ],
+    "id": "id_1776417393588_25ytbgn"
+  },
+  {
+    "title": "test_tc28_user_list_in_profile",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:08",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Profile",
+    "steps": [],
+    "tags": [
+      "0.14s"
+    ],
+    "id": "id_1776417393589_yefkinz"
+  },
+  {
+    "title": "test_tc29_profile_account_info",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:09",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Profile",
+    "steps": [],
+    "tags": [
+      "0.14s"
+    ],
+    "id": "id_1776417393590_re2a792"
+  },
+  {
+    "title": "test_tc109_page_loads",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:09",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393591_q9927lt"
+  },
+  {
+    "title": "test_tc110_no_dealership_id",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:09",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393592_2iiisfy"
+  },
+  {
+    "title": "test_tc111_invalid_dealership_id",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:09",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.14s"
+    ],
+    "id": "id_1776417393593_m17rwrf"
+  },
+  {
+    "title": "test_tc112_back_forward",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:09",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393594_lqlacrj"
+  },
+  {
+    "title": "test_tc113_refresh_retains_context",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:09",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.14s"
+    ],
+    "id": "id_1776417393595_zp2z8lf"
+  },
+  {
+    "title": "test_tc114_session_refresh",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:09",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393596_1h5964q"
+  },
+  {
+    "title": "test_tc115_unauthorized_redirect",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:09",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.09s"
+    ],
+    "id": "id_1776417393597_9xyul97"
+  },
+  {
+    "title": "test_tc117_dealership_search",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:10",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393598_odhgf5f"
+  },
+  {
+    "title": "test_tc118_select_navigates",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:10",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393600_vcvljy6"
+  },
+  {
+    "title": "test_tc119_modal_close",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:10",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393600_6fpvzfi"
+  },
+  {
+    "title": "test_tc120_placeholder_text",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:10",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.12s"
+    ],
+    "id": "id_1776417393601_aemeqpy"
+  },
+  {
+    "title": "test_tc121_dealer_info",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:10",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393602_tjwwhu7"
+  },
+  {
+    "title": "test_tc122_dealer_image",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:10",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.12s"
+    ],
+    "id": "id_1776417393603_9brwdqs"
+  },
+  {
+    "title": "test_tc123_fallback_initials",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:10",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.12s"
+    ],
+    "id": "id_1776417393604_rxl8604"
+  },
+  {
+    "title": "test_tc124_nav_links",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:11",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.12s"
+    ],
+    "id": "id_1776417393606_5pb21d9"
+  },
+  {
+    "title": "test_tc125_valuation_summary",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:11",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.12s"
+    ],
+    "id": "id_1776417393607_loqf40l"
+  },
+  {
+    "title": "test_tc126_scores_with_colors",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:11",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.18s"
+    ],
+    "id": "id_1776417393608_fcavhni"
+  },
+  {
+    "title": "test_tc127_momentum_score_value",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:11",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393609_pu0ja2d"
+  },
+  {
+    "title": "test_tc128_environment_score_value",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:11",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393610_ot07td5"
+  },
+  {
+    "title": "test_tc129_revenue_range",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:11",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.12s"
+    ],
+    "id": "id_1776417393611_ns7ia47"
+  },
+  {
+    "title": "test_tc130_financial_metrics",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:11",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393612_3f8hjda"
+  },
+  {
+    "title": "test_tc131_percentage_indicators",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:12",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.12s"
+    ],
+    "id": "id_1776417393612_k3e2g7v"
+  },
+  {
+    "title": "test_tc132_valuation_graph",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:12",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393613_398oh4s"
+  },
+  {
+    "title": "test_tc133_graph_xaxis_months",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:12",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393614_cqt77k1"
+  },
+  {
+    "title": "test_tc134_powered_by_jumpiq",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:12",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393615_kaqefeo"
+  },
+  {
+    "title": "test_tc135_insight_headlines",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:12",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393616_oooxbnc"
+  },
+  {
+    "title": "test_tc136_impact_tags",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:12",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393617_7yjunz7"
+  },
+  {
+    "title": "test_tc137_click_insight_modal",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:12",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393618_jfl3fdz"
+  },
+  {
+    "title": "test_tc138_why_this_matters",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:48:12",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "560.69s"
+    ],
+    "id": "id_1776417393619_pcfablh"
+  },
+  {
+    "title": "test_tc139_modal_category_tags",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:33",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.56s"
+    ],
+    "id": "id_1776417393620_5i5c23t"
+  },
+  {
+    "title": "test_tc140_insight_modal_close",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:34",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.36s"
+    ],
+    "id": "id_1776417393621_5dirm7r"
+  },
+  {
+    "title": "test_tc141_map_section_exists",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:34",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.23s"
+    ],
+    "id": "id_1776417393622_yeg4nzz"
+  },
+  {
+    "title": "test_tc142_zoom_controls",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:34",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.16s"
+    ],
+    "id": "id_1776417393623_5fjkmeu"
+  },
+  {
+    "title": "test_tc143_view_by_visible",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:34",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.16s"
+    ],
+    "id": "id_1776417393624_pklx5t3"
+  },
+  {
+    "title": "test_tc144_readable_currency",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:35",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.15s"
+    ],
+    "id": "id_1776417393625_t7h6na8"
+  },
+  {
+    "title": "test_tc145_responsiveness",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:35",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.17s"
+    ],
+    "id": "id_1776417393626_737b3dh"
+  },
+  {
+    "title": "test_tc146_keyboard_nav",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:35",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.45s"
+    ],
+    "id": "id_1776417393627_4m6uapf"
+  },
+  {
+    "title": "test_tc147_valuation_change_percent",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:35",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.19s"
+    ],
+    "id": "id_1776417393629_kufj8ct"
+  },
+  {
+    "title": "test_tc148_whats_new",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:36",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Single Dealership Extended",
+    "steps": [],
+    "tags": [
+      "0.18s"
+    ],
+    "id": "id_1776417393631_yep8ht1"
+  },
+  {
+    "title": "test_tc149_navigate_to_dealer_groups",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:36",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.17s"
+    ],
+    "id": "id_1776417393632_he6ibse"
+  },
+  {
+    "title": "test_tc150_group_name_heading",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:36",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.19s"
+    ],
+    "id": "id_1776417393634_aegoios"
+  },
+  {
+    "title": "test_tc151_subtitle_visible",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:36",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.17s"
+    ],
+    "id": "id_1776417393635_poatdog"
+  },
+  {
+    "title": "test_tc152_total_group_valuation",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:36",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.15s"
+    ],
+    "id": "id_1776417393636_etzb930"
+  },
+  {
+    "title": "test_tc153_blue_sky_valuation",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:36",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.14s"
+    ],
+    "id": "id_1776417393640_7sm1re3"
+  },
+  {
+    "title": "test_tc154_real_estate_valuation",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:37",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.15s"
+    ],
+    "id": "id_1776417393643_f9710ho"
+  },
+  {
+    "title": "test_tc155_currency_formatted_ranges",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:37",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393644_br38g61"
+  },
+  {
+    "title": "test_tc156_change_percentage",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:37",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393646_td6sb4x"
+  },
+  {
+    "title": "test_tc157_time_range_visible",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:37",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393647_6xj7hm8"
+  },
+  {
+    "title": "test_tc158_default_time_range",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:37",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393648_1lqodvc"
+  },
+  {
+    "title": "test_tc159_y_axis_label",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:37",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.16s"
+    ],
+    "id": "id_1776417393649_dn3dx0x"
+  },
+  {
+    "title": "test_tc160_x_axis_label",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:37",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.16s"
+    ],
+    "id": "id_1776417393650_i05m7lo"
+  },
+  {
+    "title": "test_tc161_group_trend_lines",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:38",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.16s"
+    ],
+    "id": "id_1776417393651_a89e8a8"
+  },
+  {
+    "title": "test_tc162_scatter_chart_visible",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:38",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393652_yrrd6ln"
+  },
+  {
+    "title": "test_tc163_quadrant_labels",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:38",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.14s"
+    ],
+    "id": "id_1776417393653_499rkf8"
+  },
+  {
+    "title": "test_tc164_scatter_axes",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:38",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.17s"
+    ],
+    "id": "id_1776417393654_6j0vwbq"
+  },
+  {
+    "title": "test_tc165_trend_vectors_default",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:38",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.14s"
+    ],
+    "id": "id_1776417393655_s5wamwl"
+  },
+  {
+    "title": "test_tc166_toggle_trend_vectors",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:38",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393656_q9jbe1r"
+  },
+  {
+    "title": "test_tc167_reset_zoom",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:38",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.14s"
+    ],
+    "id": "id_1776417393657_16v5jxh"
+  },
+  {
+    "title": "test_tc168_trending_analysis_visible",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:39",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.14s"
+    ],
+    "id": "id_1776417393658_jex2o93"
+  },
+  {
+    "title": "test_tc169_positioning_analysis_visible",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:39",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393659_dn13xi4"
+  },
+  {
+    "title": "test_tc170_powered_by_jumpiq_ai",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:39",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.13s"
+    ],
+    "id": "id_1776417393660_rtr2xcq"
+  },
+  {
+    "title": "test_tc171_insight_nav_arrows",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:39",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.15s"
+    ],
+    "id": "id_1776417393661_uji9h7l"
+  },
+  {
+    "title": "test_tc172_insight_arrow_navigation",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:39",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.16s"
+    ],
+    "id": "id_1776417393662_c6vnkwd"
+  },
+  {
+    "title": "test_tc173_leaderboard_visible",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:39",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "0.14s"
+    ],
+    "id": "id_1776417393663_28ljpoq"
+  },
+  {
+    "title": "test_tc174_leaderboard_headers",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:57:39",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "28.57s"
+    ],
+    "id": "id_1776417393664_sdpikng"
+  },
+  {
+    "title": "test_tc175_your_group_highlighted",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:58:08",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "55.04s"
+    ],
+    "id": "id_1776417393665_g7zqs3r"
+  },
+  {
+    "title": "test_tc176_leaderboard_rows",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:59:03",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "54.92s"
+    ],
+    "id": "id_1776417393666_xy1cqvb"
+  },
+  {
+    "title": "test_tc177_view_more",
+    "description": "",
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Automated",
+    "locked": true,
+    "lastRun": "2026-04-17T12:59:58",
+    "projectId": "id_1776337734765_kf51gjg",
+    "suite": "Dealer Groups",
+    "steps": [],
+    "tags": [
+      "54.79s"
+    ],
+    "id": "id_1776417393667_p3xsy8z"
+  },
+  {
+    "title": "Verify BRD Document Upload - Valid PDF",
+    "description": "Validates that a user can successfully upload a BRD document in PDF format.",
+    "preconditions": [
+      "User is logged in to the TCMS."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Upload BRD' section.",
+        "expected": "The upload interface is displayed."
+      },
+      {
+        "step": "Select a valid BRD document in PDF format (e.g., 'sample_brd.pdf').",
+        "expected": "The file name is displayed next to the upload button."
+      },
+      {
+        "step": "Click the 'Upload' button.",
+        "expected": "A success message is displayed, and the document is listed as uploaded."
+      }
+    ],
+    "priority": "High",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348648_k2qgg7a"
+  },
+  {
+    "title": "Verify BRD Document Upload - Valid DOCX",
+    "description": "Validates that a user can successfully upload a BRD document in DOCX format.",
+    "preconditions": [
+      "User is logged in to the TCMS."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Upload BRD' section.",
+        "expected": "The upload interface is displayed."
+      },
+      {
+        "step": "Select a valid BRD document in DOCX format (e.g., 'sample_brd.docx').",
+        "expected": "The file name is displayed next to the upload button."
+      },
+      {
+        "step": "Click the 'Upload' button.",
+        "expected": "A success message is displayed, and the document is listed as uploaded."
+      }
+    ],
+    "priority": "High",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348654_zd5xdbc"
+  },
+  {
+    "title": "Verify BRD Document Upload - Invalid File Type",
+    "description": "Validates that the system rejects uploading documents with unsupported file types.",
+    "preconditions": [
+      "User is logged in to the TCMS."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Upload BRD' section.",
+        "expected": "The upload interface is displayed."
+      },
+      {
+        "step": "Select an invalid file type (e.g., 'image.jpg' or 'script.js').",
+        "expected": "The file name is displayed next to the upload button."
+      },
+      {
+        "step": "Click the 'Upload' button.",
+        "expected": "An error message indicating 'Unsupported file type' or similar is displayed, and the document is not uploaded."
+      }
+    ],
+    "priority": "High",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348661_g2fcpie"
+  },
+  {
+    "title": "Verify BRD Document Upload - Large File Size",
+    "description": "Validates the system's behavior when uploading a BRD document exceeding the maximum allowed file size.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "A BRD document exceeding the system's maximum allowed size (e.g., 50MB) is available."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Upload BRD' section.",
+        "expected": "The upload interface is displayed."
+      },
+      {
+        "step": "Select the large BRD document.",
+        "expected": "The file name is displayed next to the upload button."
+      },
+      {
+        "step": "Click the 'Upload' button.",
+        "expected": "An error message indicating 'File size exceeds limit' or similar is displayed, and the document is not uploaded."
+      }
+    ],
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348666_7emyp7k"
+  },
+  {
+    "title": "Verify AI Test Case Generation from Valid BRD",
+    "description": "Validates that the system can successfully generate relevant test cases from a properly formatted BRD document using AI.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "A valid BRD document has been successfully uploaded (e.g., 'sample_brd.pdf')."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Generate Test Cases' section.",
+        "expected": "The generation interface is displayed, showing uploaded BRD documents."
+      },
+      {
+        "step": "Select the uploaded 'sample_brd.pdf' document.",
+        "expected": "The document is selected for generation."
+      },
+      {
+        "step": "Click the 'Generate Test Cases' button.",
+        "expected": "A loading indicator is displayed, and then a list of newly generated test cases appears, relevant to the BRD content."
+      }
+    ],
+    "priority": "Critical",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348673_9lkkqf1"
+  },
+  {
+    "title": "Verify AI Test Case Generation from Empty BRD",
+    "description": "Validates the system's behavior when attempting to generate test cases from an empty or nearly empty BRD document.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "An empty or minimal BRD document (e.g., 'empty_brd.pdf') has been successfully uploaded."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Generate Test Cases' section.",
+        "expected": "The generation interface is displayed."
+      },
+      {
+        "step": "Select the uploaded 'empty_brd.pdf' document.",
+        "expected": "The document is selected."
+      },
+      {
+        "step": "Click the 'Generate Test Cases' button.",
+        "expected": "Either a message indicating 'No requirements found' or a very small number of generic test cases are generated, or an error/warning is displayed."
+      }
+    ],
+    "priority": "Medium",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348677_jf89h9q"
+  },
+  {
+    "title": "Verify Triggering Single Test Execution",
+    "description": "Validates that a user can trigger the execution of a single, selected test case.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "At least one test case with an associated Playwright script exists in the system."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Test Cases' list.",
+        "expected": "A list of available test cases is displayed."
+      },
+      {
+        "step": "Select a specific test case (e.g., 'TC-001: Login with valid credentials').",
+        "expected": "The test case is highlighted or checked."
+      },
+      {
+        "step": "Click the 'Execute Selected' button.",
+        "expected": "A confirmation dialog appears, or a message indicating 'Execution started' is displayed, and the test case status changes to 'Running'."
+      }
+    ],
+    "priority": "High",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348681_cmjkxrw"
+  },
+  {
+    "title": "Verify Triggering Multiple Test Executions",
+    "description": "Validates that a user can trigger the execution of multiple selected test cases simultaneously.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "Multiple test cases with associated Playwright scripts exist in the system."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Test Cases' list.",
+        "expected": "A list of available test cases is displayed."
+      },
+      {
+        "step": "Select multiple test cases (e.g., 'TC-001', 'TC-002', 'TC-003').",
+        "expected": "The selected test cases are highlighted or checked."
+      },
+      {
+        "step": "Click the 'Execute Selected' button.",
+        "expected": "A confirmation dialog appears, or a message indicating 'Execution started for X test cases' is displayed, and the status of selected test cases changes to 'Running'."
+      }
+    ],
+    "priority": "High",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348684_dj25af3"
+  },
+  {
+    "title": "Verify Playwright Script Execution - Success",
+    "description": "Validates that the system correctly executes a Playwright script that is expected to pass.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "A test case linked to a known passing Playwright script exists and has been triggered for execution."
+    ],
+    "steps": [
+      {
+        "step": "Monitor the execution status of the triggered test case.",
+        "expected": "The status changes from 'Running' to 'Passed'."
+      },
+      {
+        "step": "Navigate to the 'Test Results' dashboard and view the specific test case result.",
+        "expected": "The result shows 'Passed' with relevant execution details (e.g., duration, logs)."
+      }
+    ],
+    "priority": "Critical",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348688_4l6agkp"
+  },
+  {
+    "title": "Verify Playwright Script Execution - Failure",
+    "description": "Validates that the system correctly executes a Playwright script that is expected to fail.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "A test case linked to a known failing Playwright script exists and has been triggered for execution."
+    ],
+    "steps": [
+      {
+        "step": "Monitor the execution status of the triggered test case.",
+        "expected": "The status changes from 'Running' to 'Failed'."
+      },
+      {
+        "step": "Navigate to the 'Test Results' dashboard and view the specific test case result.",
+        "expected": "The result shows 'Failed' with relevant error messages, stack traces, and potentially screenshots/videos."
+      }
+    ],
+    "priority": "Critical",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348691_zxer5wb"
+  },
+  {
+    "title": "Verify Playwright Script Execution - Error Handling",
+    "description": "Validates the system's handling of Playwright scripts with syntax errors or runtime exceptions.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "A test case linked to a Playwright script containing a syntax error or a runtime exception exists and has been triggered for execution."
+    ],
+    "steps": [
+      {
+        "step": "Monitor the execution status of the triggered test case.",
+        "expected": "The status changes from 'Running' to 'Error' or 'Failed'."
+      },
+      {
+        "step": "Navigate to the 'Test Results' dashboard and view the specific test case result.",
+        "expected": "The result shows 'Error' or 'Failed' with detailed error messages and logs indicating the script issue."
+      }
+    ],
+    "priority": "High",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348695_7fz0341"
+  },
+  {
+    "title": "Verify Test Results Display on Dashboard - Passed",
+    "description": "Validates that the dashboard accurately displays results for passed test executions.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "At least one test case has been executed successfully (passed)."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Dashboard' or 'Test Results' section.",
+        "expected": "The dashboard loads, displaying an overview of test results."
+      },
+      {
+        "step": "Locate the recently passed test execution.",
+        "expected": "The execution is listed with a 'Passed' status, correct duration, and other relevant metadata."
+      },
+      {
+        "step": "Click on the passed execution to view details.",
+        "expected": "A detailed view of the passed test case is displayed, showing steps, logs, and confirming 'Passed' status."
+      }
+    ],
+    "priority": "Critical",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348698_z6weaw2"
+  },
+  {
+    "title": "Verify Test Results Display on Dashboard - Failed",
+    "description": "Validates that the dashboard accurately displays results for failed test executions, including error details.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "At least one test case has been executed and failed."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Dashboard' or 'Test Results' section.",
+        "expected": "The dashboard loads, displaying an overview of test results."
+      },
+      {
+        "step": "Locate the recently failed test execution.",
+        "expected": "The execution is listed with a 'Failed' status, correct duration, and other relevant metadata."
+      },
+      {
+        "step": "Click on the failed execution to view details.",
+        "expected": "A detailed view of the failed test case is displayed, showing steps, error messages, stack traces, and confirming 'Failed' status."
+      }
+    ],
+    "priority": "Critical",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348700_ii5rt0c"
+  },
+  {
+    "title": "Verify Test Results Filtering and Sorting on Dashboard",
+    "description": "Validates that users can filter and sort test results on the dashboard by various criteria (e.g., status, date, test suite).",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "Multiple test executions with varying statuses, dates, and associated test suites exist in the system."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Dashboard' or 'Test Results' section.",
+        "expected": "The dashboard loads, displaying an overview of test results."
+      },
+      {
+        "step": "Apply a filter for 'Status: Failed'.",
+        "expected": "Only test executions with a 'Failed' status are displayed."
+      },
+      {
+        "step": "Apply a filter for 'Date: Last 7 days'.",
+        "expected": "Only test executions from the last 7 days are displayed."
+      },
+      {
+        "step": "Sort the results by 'Execution Date (Descending)'.",
+        "expected": "The most recent test executions are displayed at the top of the list."
+      }
+    ],
+    "priority": "High",
+    "type": "Functional",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348703_sg9s5aw"
+  },
+  {
+    "title": "Verify Concurrent Test Executions Handling",
+    "description": "Validates that the system can handle multiple test executions triggered concurrently without data corruption or significant performance degradation.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "Multiple independent test suites or a large number of individual test cases are available for execution."
+    ],
+    "steps": [
+      {
+        "step": "Simultaneously trigger the execution of 3-5 different test suites/large sets of test cases.",
+        "expected": "All triggered executions start and proceed without immediate errors."
+      },
+      {
+        "step": "Monitor the status of all concurrent executions.",
+        "expected": "All executions complete with their correct respective statuses (Passed/Failed/Error)."
+      },
+      {
+        "step": "Review the results for each execution on the dashboard.",
+        "expected": "Results for each execution are accurately stored and displayed, without overlap or corruption from other concurrent runs."
+      }
+    ],
+    "priority": "High",
+    "type": "Performance",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348705_oh6d805"
+  },
+  {
+    "title": "Verify Dashboard Query Response Time - Small Data",
+    "description": "Validates that dashboard queries respond within 2 seconds when displaying a small amount of test result data.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "The system contains a small number of test results (e.g., < 100 executions)."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Dashboard' or 'Test Results' section.",
+        "expected": "The dashboard loads and displays results within 2 seconds."
+      },
+      {
+        "step": "Apply a simple filter (e.g., 'Status: All').",
+        "expected": "The filtered results are displayed within 2 seconds."
+      }
+    ],
+    "priority": "High",
+    "type": "Performance",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348708_ghea759"
+  },
+  {
+    "title": "Verify Dashboard Query Response Time - Large Data",
+    "description": "Validates that dashboard queries respond within 2 seconds even when displaying a large amount of test result data.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "The system contains a large number of test results (e.g., > 10,000 executions)."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the 'Dashboard' or 'Test Results' section.",
+        "expected": "The dashboard loads and displays results within 2 seconds."
+      },
+      {
+        "step": "Apply a complex filter (e.g., 'Status: Failed' AND 'Date: Last 30 days' AND 'Test Suite: Regression').",
+        "expected": "The filtered results are displayed within 2 seconds."
+      },
+      {
+        "step": "Sort the results by a different column (e.g., 'Duration').",
+        "expected": "The sorted results are displayed within 2 seconds."
+      }
+    ],
+    "priority": "Critical",
+    "type": "Performance",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348710_138kbst"
+  },
+  {
+    "title": "Verify Secure Authentication - Valid Credentials",
+    "description": "Validates that a user can successfully log in using valid credentials and obtain a JWT.",
+    "preconditions": [
+      "A valid user account (username/password) exists in the system."
+    ],
+    "steps": [
+      {
+        "step": "Navigate to the TCMS login page.",
+        "expected": "The login form is displayed."
+      },
+      {
+        "step": "Enter valid username and password.",
+        "expected": "Credentials are entered into the respective fields."
+      },
+      {
+        "step": "Click the 'Login' button.",
+        "expected": "User is redirected to the dashboard, and a valid JWT is issued and stored (e.g., in local storage or cookies)."
+      }
+    ],
+    "priority": "Critical",
+    "type": "Security",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348712_9alsjgb"
+  },
+  {
+    "title": "Verify Secure Authentication - Invalid Credentials",
+    "description": "Validates that the system prevents login with invalid credentials and provides an appropriate error message.",
+    "preconditions": [],
+    "steps": [
+      {
+        "step": "Navigate to the TCMS login page.",
+        "expected": "The login form is displayed."
+      },
+      {
+        "step": "Enter an invalid username or password.",
+        "expected": "Invalid credentials are entered."
+      },
+      {
+        "step": "Click the 'Login' button.",
+        "expected": "An error message like 'Invalid credentials' or 'Authentication failed' is displayed, and the user remains on the login page."
+      }
+    ],
+    "priority": "Critical",
+    "type": "Security",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348714_agwm59q"
+  },
+  {
+    "title": "Verify Access to Protected Resources Without JWT",
+    "description": "Validates that unauthorized users (without a valid JWT) cannot access protected resources.",
+    "preconditions": [
+      "User is not logged in, or their JWT has expired/been removed."
+    ],
+    "steps": [
+      {
+        "step": "Attempt to directly navigate to a protected page URL (e.g., '/dashboard', '/test-cases').",
+        "expected": "The system redirects the user to the login page, or displays an 'Unauthorized' error message."
+      },
+      {
+        "step": "Attempt to make an API request to a protected endpoint without a JWT.",
+        "expected": "The API returns a 401 Unauthorized or 403 Forbidden status code."
+      }
+    ],
+    "priority": "Critical",
+    "type": "Security",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348716_ak10r18"
+  },
+  {
+    "title": "Verify JWT Token Expiration Handling",
+    "description": "Validates that the system correctly handles JWT token expiration, requiring re-authentication.",
+    "preconditions": [
+      "User is logged in to the TCMS.",
+      "The JWT token has a short expiration time configured for testing (e.g., 1 minute)."
+    ],
+    "steps": [
+      {
+        "step": "Log in to the TCMS.",
+        "expected": "User is authenticated, and a JWT is issued."
+      },
+      {
+        "step": "Wait for the JWT token to expire (e.g., 1 minute).",
+        "expected": "The token expires in the background."
+      },
+      {
+        "step": "Attempt to perform an action that requires authentication (e.g., navigate to a different protected page, trigger test execution).",
+        "expected": "The system prompts the user to re-authenticate (e.g., redirects to login page or shows a session expired message)."
+      }
+    ],
+    "priority": "High",
+    "type": "Security",
+    "status": "Active",
+    "automationStatus": "Not Automated",
+    "lastRun": "Never",
+    "projectId": "id_1776327592518_nf98tg2",
+    "suite": "Suite B",
+    "id": "id_1776423348718_fbpoc9a"
   }
 ]

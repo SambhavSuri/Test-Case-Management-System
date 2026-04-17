@@ -56,8 +56,15 @@ export default function AutomationRunner() {
 
   // Results
   const [results, setResults] = useState<AutoResult[] | null>(null);
+  const [liveResults, setLiveResults] = useState<AutoResult[]>([]);
   const [importedRunId, setImportedRunId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+
+  // Resume
+  const [interruptedInfo, setInterruptedInfo] = useState<{
+    interrupted: boolean; completedCount: number; totalCount: number;
+    passed: number; failed: number; skipped: number; errors: number;
+  } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,7 +96,7 @@ export default function AutomationRunner() {
             setIsRunning(true);
             setOutputLines(state.outputLines || []);
             setProgress(state.progress || { passed: 0, failed: 0, skipped: 0, errors: 0, total: 0 });
-            // Subscribe to new events via reconnect SSE
+            setLiveResults(state.liveResults || []);
             const es = new EventSource("http://localhost:3001/api/automation/reconnect");
             eventSourceRef.current = es;
             es.onmessage = (event) => {
@@ -99,8 +106,16 @@ export default function AutomationRunner() {
                 else if (data.type === "error") setOutputLines(prev => [...prev.slice(-2000), { type: "error", text: data.line }]);
                 else if (data.type === "status") setOutputLines(prev => [...prev, { type: "status", text: data.message }]);
                 else if (data.type === "progress") setProgress(data);
+                else if (data.type === "result") {
+                  setLiveResults(prev => {
+                    const existing = new Set(prev.map(r => r.test_name));
+                    const newOnes = (data.results as AutoResult[]).filter(r => !existing.has(r.test_name));
+                    return [...prev, ...newOnes];
+                  });
+                }
                 else if (data.type === "complete") {
                   setResults(data.results || []);
+                  setLiveResults([]);
                   setProgress({ passed: data.passed, failed: data.failed, skipped: data.skipped, errors: data.errors, total: data.passed + data.failed + data.skipped + data.errors });
                   if (data.runId) setImportedRunId(data.runId);
                   setIsRunning(false);
@@ -116,6 +131,15 @@ export default function AutomationRunner() {
             setOutputLines(state.outputLines || []);
             if (state.runId) setImportedRunId(state.runId);
           }
+        }
+      } catch { }
+
+      // Check for interrupted run (per-worker JSONs still on disk)
+      try {
+        const intRes = await fetch("http://localhost:3001/api/automation/interrupted-status");
+        if (intRes.ok) {
+          const info = await intRes.json();
+          if (info.interrupted) setInterruptedInfo(info);
         }
       } catch { }
     };
@@ -204,6 +228,7 @@ export default function AutomationRunner() {
     setOutputLines([]);
     setProgress({ passed: 0, failed: 0, skipped: 0, errors: 0, total: 0 });
     setResults(null);
+    setLiveResults([]);
     setImportedRunId(null);
 
     // Build files param — check if all files are selected
@@ -228,8 +253,15 @@ export default function AutomationRunner() {
           setOutputLines(prev => [...prev, { type: "status", text: data.message }]);
         } else if (data.type === "progress") {
           setProgress(data);
+        } else if (data.type === "result") {
+          setLiveResults(prev => {
+            const existing = new Set(prev.map(r => r.test_name));
+            const newOnes = (data.results as AutoResult[]).filter(r => !existing.has(r.test_name));
+            return [...prev, ...newOnes];
+          });
         } else if (data.type === "complete") {
           setResults(data.results || []);
+          setLiveResults([]);
           setProgress({ passed: data.passed, failed: data.failed, skipped: data.skipped, errors: data.errors, total: data.passed + data.failed + data.skipped + data.errors });
           if (data.runId) setImportedRunId(data.runId);
           setIsRunning(false);
@@ -251,15 +283,74 @@ export default function AutomationRunner() {
     setOutputLines(prev => [...prev, { type: "error", text: "Run cancelled by user." }]);
   };
 
+  const startResume = () => {
+    setIsRunning(true);
+    setOutputLines([]);
+    setResults(null);
+    setLiveResults([]);
+    setImportedRunId(null);
+    setInterruptedInfo(null);
+    // Pre-seed progress from interrupted info
+    if (interruptedInfo) {
+      setProgress({ passed: interruptedInfo.passed, failed: interruptedInfo.failed, skipped: interruptedInfo.skipped, errors: interruptedInfo.errors, total: interruptedInfo.completedCount });
+    }
+
+    const params = new URLSearchParams({ ...(planId && { planId }) });
+    const es = new EventSource(`http://localhost:3001/api/automation/resume?${params}`);
+    eventSourceRef.current = es;
+
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "output") {
+          setOutputLines(prev => [...prev.slice(-2000), { type: "output", text: data.line }]);
+        } else if (data.type === "error") {
+          setOutputLines(prev => [...prev.slice(-2000), { type: "error", text: data.line }]);
+        } else if (data.type === "status") {
+          setOutputLines(prev => [...prev, { type: "status", text: data.message }]);
+        } else if (data.type === "progress") {
+          setProgress(data);
+        } else if (data.type === "result") {
+          setLiveResults(prev => {
+            const existing = new Set(prev.map(r => r.test_name));
+            const newOnes = (data.results as AutoResult[]).filter(r => !existing.has(r.test_name));
+            return [...prev, ...newOnes];
+          });
+        } else if (data.type === "complete") {
+          setResults(data.results || []);
+          setLiveResults([]);
+          setProgress({ passed: data.passed, failed: data.failed, skipped: data.skipped, errors: data.errors, total: data.passed + data.failed + data.skipped + data.errors });
+          if (data.runId) setImportedRunId(data.runId);
+          setIsRunning(false);
+          es.close();
+        }
+      } catch { }
+    };
+
+    es.onerror = () => {
+      setIsRunning(false);
+      es.close();
+    };
+  };
+
+  const discardInterrupted = async () => {
+    try {
+      await fetch("http://localhost:3001/api/automation/clear-interrupted", { method: "POST" });
+      await fetch("http://localhost:3001/api/automation/reset", { method: "POST" });
+    } catch { }
+    setInterruptedInfo(null);
+  };
+
   // Import happens automatically on the backend when the run completes
 
   const resetAll = () => {
     setResults(null);
+    setLiveResults([]);
     setImportedRunId(null);
     setOutputLines([]);
     setProgress({ passed: 0, failed: 0, skipped: 0, errors: 0, total: 0 });
-    // Clear backend state too
-    fetch("http://localhost:3001/api/automation/status").catch(() => {});
+    // Clear backend state
+    fetch("http://localhost:3001/api/automation/reset", { method: "POST" }).catch(() => {});
   };
 
   const getLineColor = (line: string, type: string) => {
@@ -328,6 +419,42 @@ export default function AutomationRunner() {
         <div className="flex gap-6">
           {/* Left: Config / Terminal */}
           <div className="flex-1 space-y-4">
+
+            {/* Interrupted run banner */}
+            {!isRunning && !results && interruptedInfo?.interrupted && (
+              <div className="bg-amber-50 border border-amber-300 rounded-xl shadow-sm px-6 py-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-amber-600 text-[24px]">warning</span>
+                  <div>
+                    <p className="text-sm font-bold text-amber-800">Interrupted run detected</p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      {interruptedInfo.completedCount} / {interruptedInfo.totalCount} tests completed
+                      <span className="mx-1.5">—</span>
+                      <span className="text-green-700">{interruptedInfo.passed} passed</span>
+                      <span className="mx-1">/</span>
+                      <span className="text-red-700">{interruptedInfo.failed} failed</span>
+                      <span className="mx-1">/</span>
+                      <span className="text-slate-600">{interruptedInfo.skipped} skipped</span>
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={startResume}
+                    className="bg-amber-600 text-white font-bold text-sm px-5 py-2 rounded-lg hover:bg-amber-700 active:scale-95 transition flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+                    Resume ({interruptedInfo.totalCount - interruptedInfo.completedCount} remaining)
+                  </button>
+                  <button
+                    onClick={discardInterrupted}
+                    className="bg-surface border border-outline-variant text-on-surface-variant font-bold text-sm px-4 py-2 rounded-lg hover:bg-surface-container-high active:scale-95 transition"
+                  >
+                    Discard
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Config section (when not running and no results) */}
             {!isRunning && !results && (
@@ -433,36 +560,78 @@ export default function AutomationRunner() {
               </div>
             )}
 
-            {/* Results table (after completion) */}
-            {results && results.length > 0 && (
+            {/* Results table (live during execution OR after completion) */}
+            {((results && results.length > 0) || (isRunning && liveResults.length > 0)) && (
               <div className="space-y-4">
-                {/* Actions */}
-                <div className="flex gap-3">
-                  {importedRunId && (
-                    <button
-                      onClick={() => navigate(`/test-cases?runId=${importedRunId}`)}
-                      className="bg-secondary text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md hover:brightness-110 active:scale-95 transition flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">visibility</span>
-                      View Test Run
+                {/* Actions — only after completion */}
+                {results && !isRunning && (
+                  <div className="flex gap-3 flex-wrap">
+                    {importedRunId && (
+                      <button
+                        onClick={() => navigate(`/test-cases?runId=${importedRunId}`)}
+                        className="bg-secondary text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md hover:brightness-110 active:scale-95 transition flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">visibility</span>
+                        View Test Run
+                      </button>
+                    )}
+                    <button onClick={resetAll} className="bg-surface border border-outline-variant text-on-surface font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-surface-container-high transition flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px]">replay</span> Run Again
                     </button>
-                  )}
-                  <button onClick={resetAll} className="bg-surface border border-outline-variant text-on-surface font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-surface-container-high transition flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">replay</span> Run Again
-                  </button>
-                </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const resp = await fetch("http://localhost:3001/api/automation/download-report?format=excel");
+                          if (!resp.ok) { const err = await resp.json(); alert(err.error || "No Excel report available"); return; }
+                          const blob = await resp.blob();
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a"); a.href = url;
+                          a.download = resp.headers.get("Content-Disposition")?.split("filename=")[1]?.replace(/"/g, "") || "test_report.xlsx";
+                          a.click(); URL.revokeObjectURL(url);
+                        } catch { alert("Download failed."); }
+                      }}
+                      className="bg-surface border border-outline-variant text-on-surface font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-surface-container-high transition flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">download</span> Download Excel
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const resp = await fetch("http://localhost:3001/api/automation/download-report?format=csv");
+                          if (!resp.ok) { const err = await resp.json(); alert(err.error || "No results available"); return; }
+                          const blob = await resp.blob();
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a"); a.href = url;
+                          a.download = resp.headers.get("Content-Disposition")?.split("filename=")[1]?.replace(/"/g, "") || "test_report.csv";
+                          a.click(); URL.revokeObjectURL(url);
+                        } catch { alert("Download failed."); }
+                      }}
+                      className="bg-surface border border-outline-variant text-on-surface font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-surface-container-high transition flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">download</span> Download CSV
+                    </button>
+                  </div>
+                )}
 
-                {importedRunId && (
+                {importedRunId && !isRunning && (
                   <div className="bg-secondary/10 border border-secondary/30 rounded-xl px-4 py-3 flex items-center gap-2 text-xs font-bold text-secondary">
                     <span className="material-symbols-outlined text-[16px]">check_circle</span>
                     Run created automatically. View it in Test Runs to review results and escalate issues.
                   </div>
                 )}
 
+                {/* Live indicator */}
+                {isRunning && liveResults.length > 0 && (
+                  <div className="flex items-center gap-2 text-xs font-bold text-primary">
+                    <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                    Live Results ({liveResults.length} tests completed)
+                  </div>
+                )}
+
                 {/* Results table */}
-                <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+                <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden max-h-[400px] overflow-y-auto">
                   <table className="w-full text-left border-collapse">
-                    <thead>
+                    <thead className="sticky top-0 z-10">
                       <tr className="bg-surface-container border-b border-outline-variant">
                         <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">ID</th>
                         <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Test Name</th>
@@ -473,7 +642,7 @@ export default function AutomationRunner() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-outline-variant/20">
-                      {results.map((r, i) => (
+                      {(results || liveResults).map((r, i) => (
                         <tr key={i} className="hover:bg-primary/5 transition-colors">
                           <td className="px-4 py-3 text-xs font-bold text-primary font-mono">{r.test_id}</td>
                           <td className="px-4 py-3 text-sm font-medium text-on-surface">{r.test_name}</td>

@@ -1,29 +1,49 @@
 [
   {
-    "name": "Automated Run — 2026-04-16",
+    "name": "Automated Run — 2026-04-17",
     "assignedTo": "Automation Script",
     "projectId": "id_1776337734765_kf51gjg",
-    "planId": "id_1776337579967_ca9bgsi",
+    "planId": "id_1776414585471_97ow932",
     "status": "In Progress",
     "runType": "Automated",
-    "createdAt": "2026-04-16",
+    "createdAt": "2026-04-17",
     "results": [
       {
-        "testCaseId": "id_1776337734766_8wbof6t",
+        "testCaseId": "id_1776417393587_olqky4m",
         "status": "Passed"
-      }
-    ],
-    "id": "id_1776337734766_6jg6v45"
-  },
-  {
-    "name": "Automated Run — 2026-04-16",
-    "assignedTo": "Automation Script",
-    "projectId": "id_1776337734765_kf51gjg",
-    "planId": "id_1776337579967_ca9bgsi",
-    "status": "In Progress",
-    "runType": "Automated",
-    "createdAt": "2026-04-16",
-    "results": [
+      },
+      {
+        "testCaseId": "id_1776417393478_05q9ebw",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393481_2d4byxb",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393482_e64dcm9",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393483_pbojkx6",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393484_8wwguwu",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393486_4lie2do",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393487_6ghv32v",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393488_d0buu17",
+        "status": "Passed"
+      },
       {
         "testCaseId": "id_1776337734766_8wbof6t",
         "status": "Passed"
@@ -43,127 +63,213 @@
       {
         "testCaseId": "id_1776337821759_5yhxjim",
         "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393502_jovv0tp",
+        "status": "Failed",
+        "comment": "TC-30 FAIL: valuation section not visible"
+      },
+      {
+        "testCaseId": "id_1776417393503_898wgk9",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393504_z3q2vtd",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393505_06xdvlp",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393506_94tme62",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393506_k4es1wm",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393507_nf63d7d",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393507_h5pbkvi",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393508_bbwnyj7",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393509_hm3ac5w",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393510_q1l07ii",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393511_8vpgpz9",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393511_yrg1d0x",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393512_3nvzqzg",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393513_e8bfrx9",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393514_rkqzh5i",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393515_w5sk17k",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393515_1ogytr5",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393535_swgvcew",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393537_wa8uqwg",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393540_p6143bg",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393541_18pe0s6",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393542_j05si6k",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393544_vszvrd1",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393545_3gt0j3o",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393546_h3pzx5k",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393548_04btlq0",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393552_r4i2ix9",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393561_o735lry",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393562_74bjdj1",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393563_3dykz85",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393564_ziqg4ok",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393565_tzlrxen",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393566_1ejkwmy",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393567_wsswnkx",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393568_oge35im",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393569_4ag88hh",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393570_g7wcunp",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393570_c9zcawp",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393571_zdxcibq",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393572_ntgekl0",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393573_0dk52zl",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393574_ec7jioo",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393575_e6vjrjx",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393575_5qqwfvi",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393576_s5w753o",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393578_igx3rm7",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393581_7pxlz2l",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393582_xyt30fy",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393583_kpj68yz",
+        "status": "Passed"
+      },
+      {
+        "testCaseId": "id_1776417393586_zwlu2pv",
+        "status": "Passed"
       }
     ],
-    "id": "id_1776337821760_r46qgke"
-  },
-  {
-    "name": "Automated Run — 2026-04-16",
-    "assignedTo": "Automation Script",
-    "projectId": "id_1776337734765_kf51gjg",
-    "planId": "id_1776337579967_ca9bgsi",
-    "status": "In Progress",
-    "runType": "Automated",
-    "createdAt": "2026-04-16",
-    "results": [
-      {
-        "testCaseId": "id_1776338024978_8z71e2e",
-        "status": "Passed"
-      }
-    ],
-    "id": "id_1776338024978_6cdzem6"
-  },
-  {
-    "name": "Automated Run — 2026-04-16",
-    "assignedTo": "Automation Script",
-    "projectId": "id_1776337734765_kf51gjg",
-    "planId": "id_1776337579967_ca9bgsi",
-    "status": "Completed",
-    "runType": "Automated",
-    "createdAt": "2026-04-16",
-    "results": [
-      {
-        "testCaseId": "id_1776339100874_bdknstw",
-        "status": "Passed",
-        "stepComments": {
-          "1": "this has issue"
-        }
-      },
-      {
-        "testCaseId": "id_1776339100875_913509h",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100875_osi6q4g",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100875_mlv0b29",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100876_xsgsbhb",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100876_98homib",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100877_octi3eh",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100877_zazj20o",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100878_x8x8ist",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100878_48brgu5",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100879_k9e51u4",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100879_ilv25yi",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100880_642wy4m",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100880_z9mvxgx",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100881_dqjito1",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100881_zvfr7jn",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100882_5ed391k",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100882_vokgn82",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100883_5smkxxe",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100884_56k9w0w",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100884_4oxg5vt",
-        "status": "Passed"
-      },
-      {
-        "testCaseId": "id_1776339100885_uyq2ldz",
-        "status": "Passed"
-      }
-    ],
-    "id": "id_1776339100885_1ni4yym"
+    "id": "id_1776422149518_8rg2akw"
   }
 ]

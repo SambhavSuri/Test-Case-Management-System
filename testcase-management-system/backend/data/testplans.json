@@ -3,13 +3,33 @@
     "name": "Sprint 1",
     "description": "Synced from Azure DevOps: Shorthills IT Support\\Sprint 1",
     "status": "In Progress",
-    "owner": "",
-    "startDate": "",
-    "endDate": "",
+    "owner": "Sam",
+    "startDate": "2026-04-10",
+    "endDate": "2026-04-17",
     "createdAt": "2026-04-16",
     "azureIterationId": "71324e0a-d689-4356-baa8-93e66bf79ec1",
     "azureIterationPath": "Shorthills IT Support\\Sprint 1",
-    "assignments": [],
+    "assignments": [
+      {
+        "type": "project",
+        "projectId": "id_1776337734765_kf51gjg"
+      },
+      {
+        "type": "project",
+        "projectId": "id_1776327592518_nf98tg2"
+      }
+    ],
     "id": "id_1776337579967_ca9bgsi"
+  },
+  {
+    "name": "Final Report ",
+    "description": "",
+    "owner": "Sam",
+    "startDate": "2026-04-10",
+    "endDate": "2026-04-17",
+    "assignments": [],
+    "status": "In Progress",
+    "createdAt": "2026-04-17",
+    "id": "id_1776414585471_97ow932"
   }
 ]
